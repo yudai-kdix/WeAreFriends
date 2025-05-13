@@ -17,10 +17,10 @@ html = """
             <button>Send</button>
         </form>
         <h4>画像送信</h4>
-        <input type="file" id="fileInput" />
+        <input type="file" id="imageFileInput" />
         <button onclick="sendImage()">Send Image</button>
         <h4>音声送信</h4>
-        <input type="file" id="fileInput" />
+        <input type="file" id="audioFileInput" />
         <button onclick="sendAudio()">Send Audio</button>
         <ul id='messages'>
         </ul>
@@ -40,7 +40,7 @@ html = """
                 event.preventDefault()
             }
             function sendImage() {
-                var fileInput = document.getElementById("fileInput")
+                var fileInput = document.getElementById("imageFileInput")
                 var file = fileInput.files[0]
                 if (file && file.type.startsWith("image/")) {
                     var reader = new FileReader()
@@ -54,7 +54,7 @@ html = """
                 }
             }
             function sendAudio() {
-                var fileInput = document.getElementById("fileInput")
+                var fileInput = document.getElementById("audioFileInput")
                 var file = fileInput.files[0]
                 if (file && file.type.startsWith("audio/")) {
                     var reader = new FileReader()
