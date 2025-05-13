@@ -1,5 +1,6 @@
 from fastapi import FastAPI, WebSocket
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from .audio_processor import AudioProcessor
 import base64
 
 app = FastAPI()
@@ -77,7 +78,6 @@ html = """
 async def get():
     return HTMLResponse(html)
 
-
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -89,15 +89,27 @@ async def websocket_endpoint(websocket: WebSocket):
         elif message["type"] == "image":
             file_data = base64.b64decode(message["data"])
             filename = message["filename"]
-            with open(f"received_image_{filename}", "wb") as f:
+
+            with open(f"received_images/{filename}", "wb") as f:
                 f.write(file_data)
+
             await websocket.send_text(f"Image {filename} received and saved.")
+
         elif message["type"] == "audio":
             file_data = base64.b64decode(message["data"])
             filename = message["filename"]
-            with open(f"received_audio_{filename}", "wb") as f:
+
+            with open(f"received_audios/{filename}", "wb") as f:
                 f.write(file_data)
-            await websocket.send_text(f"Audio {filename} received and saved.")
+
+            audio_processor = AudioProcessor(animal="犬")  # ここで動物を指定できる！
+            result = audio_processor.process(
+                data=message["data"],
+                filename=message["filename"]
+            )
+            await websocket.send_text(result)
+
+            # await websocket.send_text(f"Audio {filename} received and saved.")
 
 
 if __name__ == "__main__":
