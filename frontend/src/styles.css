@@ -1,0 +1,238 @@
+/* 全体のリセットとベースとなるスタイル */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #f5f5f5;
+  overflow-x: hidden;
+}
+
+/* アプリ全体のコンテナ */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* ヘッダー */
+.app-header {
+  background-color: rgba(0, 150, 136, 0.9);
+  color: white;
+  padding: 10px 0;
+  text-align: center;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.app-header h1 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+/* メインコンテンツ */
+.app-content {
+  flex: 1;
+  margin-top: 50px;
+  position: relative;
+}
+
+/* カメラコンテナ */
+.camera-container {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 120px);
+  overflow: hidden;
+  background-color: #000;
+}
+
+/* 動物情報のオーバーレイ */
+.animal-info-overlay {
+  position: absolute;
+  bottom: 80px;
+  left: 0;
+  right: 0;
+  padding: 15px 20px;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 8px;
+  margin: 0 10px;
+  max-width: 600px;
+  margin: 0 auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  animation: fadeIn 0.5s;
+}
+
+.animal-info-overlay h2 {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  color: #009688;
+}
+
+.animal-info-overlay p {
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+
+.animal-info-overlay ul {
+  margin-left: 20px;
+  margin-bottom: 10px;
+}
+
+.animal-info-overlay li {
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+}
+
+/* AR切り替えボタン */
+.ar-toggle-btn {
+  background-color: #009688;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.ar-toggle-btn:hover {
+  background-color: #00796b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ar-toggle-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* フッター */
+.app-footer {
+  background-color: rgba(0, 150, 136, 0.9);
+  color: white;
+  text-align: center;
+  padding: 10px 20px;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  font-size: 0.8rem;
+}
+
+/* ローディング画面 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 4px solid rgba(0, 150, 136, 0.1);
+  border-top: 4px solid #009688;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+.loading-subtitle {
+  margin-top: 10px;
+  color: #757575;
+  font-size: 0.9rem;
+}
+
+/* エラー画面 */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.error-container h2 {
+  color: #f44336;
+  margin-bottom: 15px;
+}
+
+.error-container button {
+  margin-top: 20px;
+  padding: 10px 25px;
+  background-color: #009688;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.error-container button:hover {
+  background-color: #00796b;
+}
+
+/* アニメーション */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .app-header h1 {
+    font-size: 1.2rem;
+  }
+  
+  .animal-info-overlay {
+    bottom: 70px;
+    padding: 12px 15px;
+  }
+  
+  .animal-info-overlay h2 {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 8px 0;
+  }
+  
+  .app-header h1 {
+    font-size: 1.1rem;
+  }
+  
+  .animal-info-overlay h2 {
+    font-size: 1.2rem;
+  }
+  
+  .animal-info-overlay p,
+  .animal-info-overlay li {
+    font-size: 0.85rem;
+  }
+  
+  .ar-toggle-btn {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+  }
+}
