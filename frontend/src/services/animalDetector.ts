@@ -1,4 +1,9 @@
+// src/services/animalDetector.ts
+// 重要: バックエンドを明示的にインポート（順序も重要）
 import * as tf from '@tensorflow/tfjs';
+import '@tensorflow/tfjs-backend-webgl';
+import '@tensorflow/tfjs-backend-cpu';
+// cocoSsdのインポートはバックエンドの後
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 
 // 検出対象の動物リスト（COCOデータセットのラベル）
@@ -8,10 +13,8 @@ const TARGET_ANIMALS = [
 ];
 
 class AnimalDetector {
-  constructor() {
-    this.model = null;
-    this.isLoading = false;
-  }
+  model = null;
+  isLoading = false;
 
   // モデルの読み込み
   async loadModel() {
@@ -27,8 +30,30 @@ class AnimalDetector {
 
     try {
       this.isLoading = true;
+      
+      // 利用可能なバックエンドを確認
+      console.log('Available backends:', Object.keys(tf.engine().registryFactory));
+      
+      // バックエンドを明示的に設定 (CPU優先)
+      await tf.setBackend('cpu')
+        .then(() => console.log('Using CPU backend'))
+        .catch(async (e) => {
+          console.warn('Failed to set CPU backend:', e);
+          // WebGLバックエンドを試す
+          await tf.setBackend('webgl')
+            .then(() => console.log('Using WebGL backend'))
+            .catch(e => console.error('Failed to set WebGL backend:', e));
+        });
+      
+      // 現在のバックエンドを確認
+      console.log('Current backend:', tf.getBackend());
+      
       console.log('動物検出モデルをロード中...');
-      this.model = await cocoSsd.load();
+      // 軽量モデルを使用するオプションを指定
+      const modelConfig = {
+        base: 'lite_mobilenet_v2'
+      };
+      this.model = await cocoSsd.load(modelConfig);
       console.log('動物検出モデルのロードが完了しました');
       this.isLoading = false;
       return this.model;
