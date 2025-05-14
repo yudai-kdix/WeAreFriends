@@ -236,3 +236,323 @@ body {
     font-size: 0.85rem;
   }
 }
+
+/* src/styles.css (追加部分) */
+
+/* ARモード切替ボタン */
+.ar-toggle-btn {
+  background-color: #3a5a8c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ar-toggle-btn:hover {
+  background-color: #2a4a7c;
+  transform: translateY(-2px);
+}
+
+/* 動物と会話するボタン */
+.speak-button {
+  background-color: #ff6b6b;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  animation: pulse 2s infinite;
+}
+
+.speak-button:hover {
+  background-color: #ff5252;
+  transform: scale(1.05);
+}
+
+.speak-button:active {
+  transform: scale(0.98);
+}
+
+.speak-button::before {
+  content: "🎤";
+  font-size: 18px;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(255, 107, 107, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+  }
+}
+
+/* 動物情報オーバーレイ */
+.animal-info-overlay {
+  position: absolute;
+  bottom: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 400px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animal-info-overlay h2 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  color: #333;
+  text-align: center;
+}
+
+.animal-info-overlay p {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #444;
+}
+
+.animal-info-overlay ul {
+  margin: 0;
+  padding: 0 0 0 20px;
+}
+
+.animal-info-overlay li {
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #555;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* ローディング画面 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f0f4f8;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(74, 111, 165, 0.2);
+  border-radius: 50%;
+  border-top-color: #4a6fa5;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-container p {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.loading-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin-top: 8px !important;
+}
+
+/* エラー画面 */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 0 20px;
+  background-color: #f8f0f0;
+  text-align: center;
+}
+
+.error-container h2 {
+  color: #e53935;
+  margin-bottom: 16px;
+}
+
+.error-container button {
+  margin-top: 20px;
+  background-color: #4a6fa5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.error-container button:hover {
+  background-color: #3a5a8c;
+}
+
+/* メインアプリのスタイル */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+}
+
+.app-header {
+  background-color: #4a6fa5;
+  color: white;
+  padding: 12px 16px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.app-content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.app-footer {
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 12px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.app-footer p {
+  margin: 2px 0;
+}
+
+/* カメラコンテナ */
+.camera-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #000;
+}
+
+/* src/styles.css に追加 */
+
+/* 識別ボタン */
+.identify-button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.identify-button:hover {
+  background-color: #388E3C;
+  transform: scale(1.05);
+}
+
+.identify-button:active {
+  transform: scale(0.98);
+}
+
+.identify-button:disabled {
+  background-color: #9E9E9E;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.identify-button::before {
+  content: "📸";
+  font-size: 18px;
+}
+
+/* ローディングオーバーレイ */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-overlay p {
+  color: white;
+  font-size: 18px;
+  font-weight: 500;
+}
