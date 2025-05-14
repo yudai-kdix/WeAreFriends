@@ -12,7 +12,7 @@ const config: AppConfig = {
   
   // REST APIエンドポイント
   apiBaseUrl: isDevelopment
-    ? 'http://localhost:8000/api'
+    ? 'http://localhost:8000'
     : 'https://your-production-server.com/api',
   
   // 音声認識の言語設定
