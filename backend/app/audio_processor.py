@@ -1,15 +1,3 @@
-# import base64
-# from media_processor import MediaProcessor
-
-# class AudioProcessor(MediaProcessor):
-#     def process(self, data: str, filename: str) -> str:
-#         file_data = base64.b64decode(data)
-#         file_path = f"received_audios/{filename}"
-#         with open(file_path, "wb") as f:
-#             f.write(file_data)
-#         # TODO: ここに音声認識やTTS生成などの処理を追加
-#         return f"Audio {filename} received and saved."
-
 import base64
 import os
 from openai import OpenAI
@@ -20,13 +8,15 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 class AudioProcessor(MediaProcessor):
-    def __init__(self, animal="犬"):
-        self.animal = animal
+    def __init__(self, target="犬"):  # ← 外部からは target として受け取る
+        self.friend = target  # ← 内部では friend として統一
+
+        # 会話履歴（最初にプロンプトとして friend の人格を定義）
         self.messages = [{"role": "system", "content": self.get_prompt()}]
 
     def get_prompt(self) -> str:
-        template = "あなたは{animal}です。語尾を{animal}のようにして会話してください。"
-        return template.format(animal=self.animal)
+        template = "あなたは{friend}です。語尾を{friend}のようにして会話してください。"
+        return template.format(friend=self.friend)
 
     def chat(self, user_input: str) -> str:
         self.messages.append({"role": "user", "content": user_input})
@@ -44,7 +34,7 @@ class AudioProcessor(MediaProcessor):
         with open(file_path, "wb") as f:
             f.write(file_data)
 
-        # TODO: 音声を文字起こししたとして仮の入力
+        # 仮の文字起こし（将来的にWhisperと連携可能）
         user_input = "こんにちは、何が見られる？"
         gpt_reply = self.chat(user_input)
 
