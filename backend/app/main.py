@@ -8,6 +8,7 @@ import random
 import os
 import logging
 from datetime import datetime
+from .image_processor import ImageProcessor
 import shutil
 
 # 既存の音声プロセッサのインポート
@@ -171,13 +172,13 @@ async def identify_animal(data: Dict[str, str]):
         logger.info(f"画像を保存しました: {filepath}")
         
         # 仮の画像認識処理（ランダムな動物を返す）
-        animal = random.choice(MOCK_ANIMALS)
-        confidence = round(random.uniform(0.7, 0.98), 2)
+        image_processor = ImageProcessor()
+        animal = image_processor.detect_largest_object()
         
         # レスポンスを返す
         return {
             "animal": animal,
-            "confidence": confidence,
+            "confidence": None,
             "filename": filename
         }
     
