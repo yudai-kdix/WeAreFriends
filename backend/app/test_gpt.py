@@ -1,35 +1,3 @@
-# import os
-# from openai import OpenAI
-# from dotenv import load_dotenv
-
-# load_dotenv()
-# client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-# # 会話の履歴を保持
-# messages = [
-#     {"role": "system", "content": "あなたは動物園の案内役です。来園者の質問に親切に答えてください。"}
-# ]
-
-# while True:
-#     # ユーザーからの入力を取得
-#     user_input = input("🧑 あなた：")
-#     if user_input.lower() in ["exit", "quit", "終了"]:
-#         print("会話を終了します。")
-#         break
-
-#     messages.append({"role": "user", "content": user_input})
-
-#     # GPTに問い合わせ
-#     response = client.chat.completions.create(
-#         model="gpt-3.5-turbo",
-#         messages=messages
-#     )
-
-#     reply = response.choices[0].message.content
-#     messages.append({"role": "assistant", "content": reply})
-
-#     print("🐯 GPT：", reply)
-
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
