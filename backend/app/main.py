@@ -217,113 +217,69 @@ async def identify_animal(data: Dict[str, str]):
 # WebSocketエンドポイント
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    # クエリパラメータからクライアントIDを取得
     client_id = websocket.query_params.get("client_id", f"client_{datetime.now().timestamp()}")
-    
-    # 接続を確立
     await manager.connect(websocket, client_id)
-    
-    # 動物タイプの初期設定
-    animal_type = "default"
-    
+
+    friend = "default"  # ← animal_type を friend に変更
+
     try:
         while True:
-            # メッセージを受信
             text_data = await websocket.receive_text()
             try:
-                # JSONデータをパース
                 message = json.loads(text_data)
                 message_type = message.get("type", "")
-                
-                # メッセージタイプに応じた処理
+
                 if message_type == "set_animal":
-                    # 動物タイプを設定
-                    animal_type = message.get("animal_type", "default")
-                    logger.info(f"動物タイプを設定: {animal_type}")
-                    
-                    # 確認メッセージを送信
+                    # 動物タイプの代わりに friend を設定
+                    friend = message.get("animal_type", "default")
+                    logger.info(f"friend を設定: {friend}")
                     await manager.send_message(client_id, {
                         "type": "text",
-                        "data": f"{animal_type}の設定が完了しました。会話を始めましょう！"
+                        "data": f"{friend}の設定が完了しました。会話を始めましょう！"
                     })
-                
+
                 elif message_type == "message":
-                    # ユーザーからのメッセージを処理
                     content = message.get("content", "")
                     logger.info(f"メッセージを受信: {content}")
-                    
-                    # 動物に応じた返答を生成（仮実装）
-                    if animal_type == "cat":
-                        response = f"にゃー！{content}ですか？猫として、それはとても興味深いですね。"
-                    elif animal_type == "dog":
-                        response = f"わん！{content}ですか？犬としては、とても楽しい質問ですね！"
-                    elif animal_type == "elephant":
-                        response = f"パオーン！{content}について私の大きな耳で聞いたことがあります。"
-                    else:
-                        response = f"{content}についてもっと教えてください！"
-                    
-                    # テキスト応答を送信
-                    await manager.send_message(client_id, {
-                        "type": "text",
-                        "data": response
-                    })
-                    
-                    # 音声データを生成して送信（実際には音声合成が必要）
-                    # 仮実装として、Base64エンコードされたダミーデータを送信
-                    # await manager.send_message(client_id, {
-                    #     "type": "audio",
-                    #     "data": "base64encodedaudio..." # 仮のデータ
-                    # })
-                
+                    try:
+                        audio_processor = AudioProcessor(target=friend)
+                        response = audio_processor.chat(content)
+                        await manager.send_message(client_id, {
+                            "type": "text",
+                            "data": response
+                        })
+                    except Exception as e:
+                        logger.error(f"AudioProcessor エラー: {str(e)}")
+                        await manager.send_message(client_id, {
+                            "type": "text",
+                            "data": f"エラーが発生しました: {str(e)}"
+                        })
+
                 elif message_type == "image":
-                    # 画像データを処理
                     image_data = message.get("data", "")
                     filename = message.get("filename", f"image_{datetime.now().timestamp()}.jpg")
-                    
-                    # Base64デコード
                     file_data = base64.b64decode(image_data)
                     filepath = os.path.join("received_images", filename)
-                    
-                    # 画像を保存
                     with open(filepath, "wb") as f:
                         f.write(file_data)
-                    
                     logger.info(f"画像を保存しました: {filepath}")
-                    
-                    # 仮の画像認識処理（ランダムな動物を返す）
-                    animal = random.choice(MOCK_ANIMALS)
-                    
-                    # 動物タイプを更新
-                    animal_type = animal
-                    
-                    # 結果を送信
+                    friend = random.choice(MOCK_ANIMALS)  # ← animal_type ではなく friend に設定
                     await manager.send_message(client_id, {
                         "type": "text",
-                        "data": f"画像から{animal}を検出しました！会話を始めましょう。"
+                        "data": f"画像から{friend}を検出しました！会話を始めましょう。"
                     })
-                
+
                 elif message_type == "audio":
-                    # 音声データを処理
                     audio_data = message.get("data", "")
                     filename = message.get("filename", f"audio_{datetime.now().timestamp()}.mp3")
-                    
-                    # Base64デコード
                     file_data = base64.b64decode(audio_data)
                     filepath = os.path.join("received_audios", filename)
-                    
-                    # 音声を保存
                     with open(filepath, "wb") as f:
                         f.write(file_data)
-                    
                     logger.info(f"音声を保存しました: {filepath}")
-                    
-                    # 音声処理（実際の実装に合わせて調整）
                     try:
-                        audio_processor = AudioProcessor(animal=animal_type)
-                        result = audio_processor.process(
-                            data=audio_data,
-                            filename=filename
-                        )
+                        audio_processor = AudioProcessor(target=friend)
+                        result = audio_processor.process(data=audio_data, filename=filename)
                         await manager.send_message(client_id, {
                             "type": "text",
                             "data": result
@@ -334,29 +290,25 @@ async def websocket_endpoint(websocket: WebSocket):
                             "type": "text",
                             "data": f"音声処理中にエラーが発生しました: {str(e)}"
                         })
-                
+
                 else:
-                    # 未知のメッセージタイプ
                     logger.warning(f"未知のメッセージタイプ: {message_type}")
                     await manager.send_message(client_id, {
                         "type": "text",
                         "data": f"未知のメッセージタイプです: {message_type}"
                     })
-            
+
             except json.JSONDecodeError:
-                # JSONパースエラー
                 logger.error(f"JSON解析エラー: {text_data}")
                 await manager.send_message(client_id, {
                     "type": "text",
                     "data": "メッセージの形式が正しくありません。JSONフォーマットを確認してください。"
                 })
-    
+
     except Exception as e:
-        # WebSocket接続エラー
         logger.error(f"WebSocket接続エラー: {str(e)}")
-    
+
     finally:
-        # 接続を閉じる
         manager.disconnect(client_id)
 
 if __name__ == "__main__":

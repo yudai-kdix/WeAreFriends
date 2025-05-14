@@ -23,6 +23,9 @@ destroy: #イメージ、ボリューム、その他コンテナを全て削除�
 destroy-volumes: #ボリュームの削除
 	docker compose down --volumes --remove-orphans
 
+pull:
+	git pull origin main
+	cd backend && poetry install
 
 ##########コンテナ操作系
 
@@ -44,11 +47,11 @@ reset:  #全てのデータを削除し、新規ビルド(成果物は消えな�
 
 ##########コンテナに入る系
 
-app:  #appコンテナ(next.jsのコンテナ)に入る
-	docker compose exec app sh
+backend:  #バックエンドコンテナに入る
+    docker compose exec backend bash
 
-app-bash:  #appコンテナ(next.jsのコンテナ)に入る(bash)
-	docker compose exec app bash
+frontend:  #フロントエンドコンテナに入る
+    docker compose exec frontend bash
 
 ps: . #現在稼働中のコンテナを表示
 	docker compose ps
