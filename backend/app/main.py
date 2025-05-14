@@ -243,11 +243,23 @@ async def websocket_endpoint(websocket: WebSocket):
                     logger.info(f"メッセージを受信: {content}")
                     try:
                         audio_processor = AudioProcessor(target=friend)
-                        response = audio_processor.chat(content)
+                        reply_text, reply_audio_b64 = audio_processor.chat(content)
+
+                        # テキスト送信
                         await manager.send_message(client_id, {
                             "type": "text",
-                            "data": response
+                            "data": reply_text
                         })
+
+                        # logger.info(f"🎤 Audioを送信中（{client_id}）: Base64前半 → {reply_audio_b64[:100]}...")
+
+                        # 音声(Base64)送信
+                        await manager.send_message(client_id, {
+                            "type": "audio",
+                            "data": reply_audio_b64,
+                            "format": "mp3"
+                        })
+
                     except Exception as e:
                         logger.error(f"AudioProcessor エラー: {str(e)}")
                         await manager.send_message(client_id, {
