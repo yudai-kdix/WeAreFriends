@@ -17,6 +17,8 @@ const ARScene: FC = () => {
   const [showConversation, setShowConversation] = useState<boolean>(false);
   const [identifyButtonVisible, setIdentifyButtonVisible] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  // WebSocket用のクライアントIDを保持するための状態
+  const [clientId] = useState<string>(`client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
 
   // WebXRサポートのチェック
   useEffect(() => {
@@ -121,8 +123,12 @@ const ARScene: FC = () => {
       // キャンバスから画像データを取得
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
       
+      // クライアントIDをクエリパラメータとして追加したURLを構築
+      const apiUrl = `${config.apiBaseUrl}/identify-animal?client_id=${encodeURIComponent(clientId)}`;
+      console.log(`画像識別APIを呼び出し: ${apiUrl}`);
+      
       // バックエンドAPIに画像を送信
-      const response = await fetch(`${config.apiBaseUrl}/identify-animal`, {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -137,8 +143,9 @@ const ARScene: FC = () => {
       }
       
       const result = await response.json();
+      console.log('API応答:', result);
       
-      if (result.animal) {
+      if (result.animal && result.animal !== "unknown") {
         setDetectedAnimal(result.animal);
         // 動物が検出されたら会話パネルを自動的に表示
         setShowConversation(true);
@@ -250,6 +257,7 @@ const ARScene: FC = () => {
             animalName={getAnimalInfo().name}
             isVisible={showConversation}
             onClose={closeConversation}
+            clientId={clientId} // クライアントIDを渡す
           />
         )}
 
@@ -310,6 +318,7 @@ const ARScene: FC = () => {
           animalName={getAnimalInfo().name}
           isVisible={showConversation}
           onClose={closeConversation}
+          clientId={clientId} // クライアントIDを渡す
         />
       )}
 

@@ -21,6 +21,9 @@ var/
 *.egg
 .env
 
+# アップロードされた画像ファイル
+received_images/
+
 # Poetry
 .venv/
 poetry.lock
