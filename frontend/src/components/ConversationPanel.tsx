@@ -14,6 +14,7 @@ interface ConversationPanelProps {
   animalName: string;
   isVisible: boolean;
   onClose: () => void;
+  clientId?: string; // クライアントIDを追加（オプショナルにして後方互換性を保持）
 }
 
 const ConversationPanel: FC<ConversationPanelProps> = ({
@@ -21,6 +22,7 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
   animalName,
   isVisible,
   onClose,
+  clientId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // デフォルト値を設定
 }) => {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [isListening, setIsListening] = useState<boolean>(false);
@@ -28,22 +30,19 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const processedMessageIds = useRef<Set<string>>(new Set()); // 処理済みメッセージIDを追跡
 
-  // WebSocketのURLを設定ファイルから取得
-  const socketUrl = config.websocketEndpoint;
+  // クライアントIDを含めたWebSocketのURL
+  const socketUrl = `${config.websocketEndpoint}?client_id=${encodeURIComponent(clientId)}`;
 
   // WebSocketの接続
   const { sendMessage, lastMessage, readyState } = useWebSocket(
-    config.websocketEndpoint,
+    socketUrl,
     {
-      share: true, // コンポーネント間でWebSocket接続を共有
+      share: false, // クライアントIDごとに別々の接続が必要なためfalseに変更
       onOpen: () => {
-        // 接続時に動物の種類を送信
-        sendMessage(
-          JSON.stringify({
-            type: "set_animal",
-            animal_type: animalType || "default",
-          })
-        );
+        console.log(`WebSocket接続確立: クライアントID = ${clientId}`);
+        
+        // ここでのset_animalメッセージ送信を削除
+        // 代わりにidentify-animalエンドポイントが会話相手を設定する
 
         // 初期メッセージを追加
         setMessages([
