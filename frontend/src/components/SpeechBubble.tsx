@@ -30,6 +30,7 @@ const SpeechBubble: FC<SpeechBubbleProps> = ({
   const charIndex = useRef<number>(0);
   const messageQueue = useRef<string[]>([]);
   const [isTalking, setIsTalking] = useState<boolean>(false);
+  const processedMessageIds = useRef<Set<string>>(new Set()); // 処理済みメッセージIDを追跡
   
   // WebSocketを使用して吹き出しのメッセージを更新（インタラクティブモードでのみ有効）
   const { lastMessage } = isInteractive ? useWebSocket<WebSocketIncomingMessage>(config.websocketEndpoint, {
@@ -48,6 +49,17 @@ const SpeechBubble: FC<SpeechBubbleProps> = ({
     try {
       const data = JSON.parse(lastMessage.data) as WebSocketIncomingMessage;
       
+      // メッセージIDを生成または取得
+      const messageId = data.id || `${data.type}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      
+      // すでに処理したメッセージは無視
+      if (processedMessageIds.current.has(messageId)) {
+        return;
+      }
+      
+      // 処理済みとしてマーク
+      processedMessageIds.current.add(messageId);
+      
       // テキストメッセージの場合のみ処理
       if (data.type === 'text' && data.data) {
         const messageText = data.data;
@@ -63,18 +75,37 @@ const SpeechBubble: FC<SpeechBubbleProps> = ({
     } catch (error) {
       // JSONでない場合はテキストメッセージとして処理
       if (typeof lastMessage.data === 'string') {
-        const messageText = lastMessage.data;
+        // 重複メッセージを避けるためのシンプルなハッシュ
+        const messageHash = `text-${lastMessage.data}-${Date.now().toString().substring(0, 8)}`;
         
-        // 現在表示中のメッセージがある場合はキューに追加
-        if (isAnimating || isTalking) {
-          messageQueue.current.push(messageText);
-        } else {
-          setCurrentMessage(messageText);
-          startAnimation(messageText);
+        if (!processedMessageIds.current.has(messageHash)) {
+          processedMessageIds.current.add(messageHash);
+          
+          const messageText = lastMessage.data;
+          
+          // 現在表示中のメッセージがある場合はキューに追加
+          if (isAnimating || isTalking) {
+            messageQueue.current.push(messageText);
+          } else {
+            setCurrentMessage(messageText);
+            startAnimation(messageText);
+          }
         }
       }
     }
   }, [lastMessage, isInteractive, isAnimating, isTalking]);
+  
+  // 一定期間経過後に処理済みメッセージのクリーンアップを行う
+  useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      // 処理済みメッセージリストのサイズが大きくなりすぎないようにする
+      if (processedMessageIds.current.size > 100) {
+        processedMessageIds.current = new Set();
+      }
+    }, 60000); // 1分ごとにチェック
+    
+    return () => clearInterval(cleanupInterval);
+  }, []);
   
   // メッセージアニメーションの開始
   const startAnimation = (text: string): void => {
