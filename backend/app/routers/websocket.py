@@ -4,7 +4,7 @@ import base64
 from datetime import datetime
 from app.managers.connection_manager import manager
 from app.models.websocket import WSRequest, WebSocketMessage
-from app.services.audio_service import chat, process_audio
+from app.services.audio_service import chat as audio_chat, process_audio as audio_process
 from app.core.logger import logger
 
 router = APIRouter()
@@ -38,7 +38,13 @@ async def websocket_endpoint(websocket: WebSocket):
                 friend = data.get("animal_type", "default")
                 manager.set_friend(client_id, friend)
                 logger.info(f"friend を手動設定: {friend}")
-                await manager.send_message(client_id, WebSocketMessage(type="text", data=f"{friend}の設定が完了しました。会話を始めましょう！").dict())
+                await manager.send_message(
+                    client_id,
+                    WebSocketMessage(
+                        type="text",
+                        data=f"{friend}の設定が完了しました。会話を始めましょう！"
+                    ).dict()
+                )
 
             elif msg_type == "message":
                 content = data.get("content", "")
@@ -62,11 +68,23 @@ async def websocket_endpoint(websocket: WebSocket):
                     )
                     continue
                 
-                text, audio_b64 = chat(content, friend)
+                # chat を呼ぶ際に session_id と friend を渡す
+                text, audio_b64 = audio_chat(
+                    content,
+                    session_id=client_id,
+                    friend=friend
+                )
+
                 # テキスト
-                await manager.send_message(client_id, WebSocketMessage(type="text", data=text).dict())
+                await manager.send_message(
+                    client_id,
+                    WebSocketMessage(type="text", data=text).dict()
+                )
                 # 音声
-                await manager.send_message(client_id, WebSocketMessage(type="audio", data=audio_b64, format="mp3").dict())
+                await manager.send_message(
+                    client_id,
+                    WebSocketMessage(type="audio", data=audio_b64, format="mp3").dict()
+                )
 
             elif msg_type == "audio":
                 audio_b64 = data.get("data", "")
@@ -86,12 +104,24 @@ async def websocket_endpoint(websocket: WebSocket):
                     )
                     continue
                     
-                text = process_audio(audio_b64, filename, friend)
-                await manager.send_message(client_id, WebSocketMessage(type="text", data=text).dict())
+                # process_audio を呼ぶ際にも session_id と friend を渡す
+                text = audio_process(
+                    audio_b64,
+                    filename,
+                    session_id=client_id,
+                    friend=friend
+                )
+                await manager.send_message(
+                    client_id,
+                    WebSocketMessage(type="text", data=text).dict()
+                )
 
             else:
                 logger.warning(f"未知のタイプ: {msg_type}")
-                await manager.send_message(client_id, WebSocketMessage(type="text", data=f"未知のメッセージタイプです: {msg_type}").dict())
+                await manager.send_message(
+                    client_id,
+                    WebSocketMessage(type="text", data=f"未知のメッセージタイプです: {msg_type}").dict()
+                )
 
     except WebSocketDisconnect:
         manager.disconnect(client_id)
