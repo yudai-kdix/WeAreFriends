@@ -26,6 +26,7 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
   const [isListening, setIsListening] = useState<boolean>(false);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const processedMessageIds = useRef<Set<string>>(new Set()); // 処理済みメッセージIDを追跡
 
   // WebSocketのURLを設定ファイルから取得
   const socketUrl = config.websocketEndpoint;
@@ -34,6 +35,7 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
   const { sendMessage, lastMessage, readyState } = useWebSocket(
     config.websocketEndpoint,
     {
+      share: true, // コンポーネント間でWebSocket接続を共有
       onOpen: () => {
         // 接続時に動物の種類を送信
         sendMessage(
@@ -83,6 +85,17 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
         const data = JSON.parse(lastMessage.data) as WebSocketIncomingMessage;
         console.log("受信メッセージ:", data);
 
+        // メッセージIDを生成（または受信したメッセージに含まれるIDを使用）
+        const messageId = data.id || `${data.type}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        
+        // すでに処理したメッセージは無視
+        if (processedMessageIds.current.has(messageId)) {
+          return;
+        }
+        
+        // 処理済みとしてマーク
+        processedMessageIds.current.add(messageId);
+
         if (data.type === "audio") {
           // 音声データの処理
           if (data.data) {
@@ -110,21 +123,42 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
       } catch (error) {
         // JSONでない場合はテキストメッセージとして処理
         console.log("テキストメッセージを受信しました:", lastMessage.data);
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content: lastMessage.data,
-            timestamp: new Date(),
-          },
-        ]);
+        
+        // 重複メッセージを避けるためのシンプルなハッシュ
+        const messageHash = `text-${lastMessage.data}-${Date.now().toString().substring(0, 8)}`;
+        
+        if (!processedMessageIds.current.has(messageHash)) {
+          processedMessageIds.current.add(messageHash);
+          
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content: lastMessage.data,
+              timestamp: new Date(),
+            },
+          ]);
+        }
       }
     }
   }, [lastMessage]);
 
+  // 一定期間経過後に処理済みメッセージのクリーンアップを行う
+  useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      // 処理済みメッセージリストのサイズが大きくなりすぎないようにする
+      if (processedMessageIds.current.size > 100) {
+        processedMessageIds.current = new Set();
+      }
+    }, 60000); // 1分ごとにチェック
+    
+    return () => clearInterval(cleanupInterval);
+  }, []);
+
   // 音声認識イベントのハンドラ設定
   useEffect(() => {
     const handleSpeech = (transcript: string): void => {
+      console.log('handleSpeech called with transcript:', transcript);
       // 認識されたテキストをメッセージとして追加
       setMessages((prev) => [
         ...prev,
@@ -139,6 +173,7 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
       const outgoingMessage: WebSocketOutgoingMessage = {
         type: "message",
         content: transcript,
+        id: `user-msg-${Date.now()}`, // 一意のIDを追加
       };
       sendMessage(JSON.stringify(outgoingMessage));
 
@@ -148,18 +183,34 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
       }, 500);
     };
 
-    speechService.onSpeech(handleSpeech);
-
-    speechService.onStart(() => {
+    const handleStart = () => {
       setIsListening(true);
-    });
+    };
 
-    speechService.onEnd(() => {
+    const handleEnd = () => {
       setIsListening(false);
-    });
+    };
+
+    // 登録前の状態を確認
+    console.log('Before registration:', speechService.getListenerStats());
+    speechService.debugLogListeners();
+
+    // 登録
+    speechService.onSpeech(handleSpeech);
+    speechService.onStart(handleStart);
+    speechService.onEnd(handleEnd);
+
+    // 登録後の状態を確認
+    console.log('After registration:', speechService.getListenerStats());
+    speechService.debugLogListeners();
 
     return () => {
-      // クリーンアップ
+      // クリーンアップ前の状態を確認
+      console.log('Before cleanup:', speechService.getListenerStats());
+      // クリーンアップ - リスナー削除を追加
+      speechService.removeSpeechHandler(handleSpeech);
+      speechService.removeStartHandler(handleStart);
+      speechService.removeEndHandler(handleEnd);
       speechService.stopListening();
     };
   }, [sendMessage]);
@@ -173,6 +224,8 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
 
   // 音声認識の開始/停止
   const toggleListening = (): void => {
+    // 現在のリスナー状態をログ
+    console.log('Before toggleListening:', speechService.getListenerStats());
     if (isListening) {
       speechService.stopListening();
     } else {

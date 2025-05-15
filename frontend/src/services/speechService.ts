@@ -147,6 +147,19 @@ class SpeechService {
     this.endHandlers.push(handler);
   }
 
+  // リスナー削除メソッド
+  public removeSpeechHandler(handler: (text: string) => void): void {
+    this.speechHandlers = this.speechHandlers.filter(h => h !== handler);
+  }
+
+  public removeStartHandler(handler: () => void): void {
+    this.startHandlers = this.startHandlers.filter(h => h !== handler);
+  }
+
+  public removeEndHandler(handler: () => void): void {
+    this.endHandlers = this.endHandlers.filter(h => h !== handler);
+  }
+
   // base64エンコードされた音声データを再生
   public async playAudio(base64Audio: string): Promise<void> {
     try {
@@ -203,6 +216,31 @@ class SpeechService {
       console.error('音声デコード中にエラーが発生しました:', error);
       this.processAudioQueue(); // エラーの場合でも次へ進む
     }
+  }
+
+  // 診断用メソッド
+  public getListenerStats(): { speech: number, start: number, end: number, error: number } {
+    return {
+      speech: this.speechHandlers.length,
+      start: this.startHandlers.length,
+      end: this.endHandlers.length,
+      error: this.errorHandlers.length
+    };
+  }
+  
+  // デバッグ用にリスナーの内容を出力
+  public debugLogListeners(): void {
+    console.log('--- SpeechService Listeners Debug ---');
+    console.log('Speech handlers:', this.speechHandlers.length);
+    console.log('Start handlers:', this.startHandlers.length);
+    console.log('End handlers:', this.endHandlers.length);
+    console.log('Error handlers:', this.errorHandlers.length);
+    
+    // オプション: 関数の内容をハッシュ化して一意性を確認
+    console.log('Speech handlers (detailed):');
+    this.speechHandlers.forEach((handler, index) => {
+      console.log(`  [${index}]: ${handler.toString().substring(0, 50)}...`);
+    });
   }
 }
 
