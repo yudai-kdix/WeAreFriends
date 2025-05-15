@@ -48,10 +48,10 @@ reset:  #全てのデータを削除し、新規ビルド(成果物は消えな�
 ##########コンテナに入る系
 
 backend:  #バックエンドコンテナに入る
-    docker compose exec backend bash
+	docker compose exec backend bash
 
 frontend:  #フロントエンドコンテナに入る
-    docker compose exec frontend bash
+	docker compose exec frontend bash
 
 ps: . #現在稼働中のコンテナを表示
 	docker compose ps
@@ -60,7 +60,7 @@ ps: . #現在稼働中のコンテナを表示
 
 npm-dev:  #サーバーを起動(コンテナ起動時にport:3000は使われているため、あまり意味はない)
 	docker compose exec app npm run dev
-
+ 
 ##########ブラウザ表示系
 
 mac-app:  #MacOSの場合はこれでブラウザが開く

@@ -15,8 +15,15 @@ COPY poetry.lock* ./
 # 依存関係のインストール
 RUN poetry install --no-interaction --no-ansi
 
-RUN apt -y update
-RUN apt -y install libopencv-dev
+COPY ./badproxy /etc/apt/apt.conf.d/99fixbadproxy
+
+RUN printf "deb http://ftp.jp.debian.org/debian bullseye main contrib non-free\n" \
+        > /etc/apt/sources.list && \
+    apt-get update
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* \
+    && apt-get update \
+    && apt-get install -y --fix-missing libopencv-dev
 
 # アプリケーションコードをコピー
 COPY . .
