@@ -23,12 +23,14 @@ export interface WebSocketOutgoingMessage {
   type: WebSocketMessageType;
   content?: string;
   animal_type?: string;
+  id?: string; // メッセージの一意識別子を追加
 }
 
 // WebSocketから受信するメッセージの型
 export interface WebSocketIncomingMessage {
   type: WebSocketMessageType;
   data?: string;
+  id?: string; // メッセージの一意識別子を追加
   error?: string;
 }
 
