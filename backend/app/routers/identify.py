@@ -55,7 +55,7 @@ async def identify_animal(data: Dict[str, str]):
         # レスポンスを返す
         return {
             "animal": animal,
-            "confidence": None,
+            "confidence": 0.0,
             "filename": filename
         }
     
