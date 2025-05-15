@@ -15,6 +15,9 @@ COPY poetry.lock* ./
 # 依存関係のインストール
 RUN poetry install --no-interaction --no-ansi
 
+RUN apt -y update
+RUN apt -y install libopencv-dev
+
 # アプリケーションコードをコピー
 COPY . .
 
