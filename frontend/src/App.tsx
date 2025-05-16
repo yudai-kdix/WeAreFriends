@@ -1,4 +1,4 @@
-import React, { useState, useEffect, FC } from 'react';
+import React, { useState, useEffect, type FC } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import './styles.css';
 import ARScene from './components/ARScene';
@@ -28,7 +28,7 @@ const App: FC = () => {
   // WebSocketの状態を監視（client_idを含めたURLで接続）
   const { readyState } = useWebSocket(socketUrl, {
     share: true, // コンポーネント間でWebSocket接続を共有
-    shouldReconnect: (closeEvent) => true,
+    shouldReconnect: () => true,
     reconnectAttempts: config.websocket.maxReconnectAttempts,
     reconnectInterval: config.websocket.reconnectDelay,
     onOpen: () => console.log(`App: WebSocket接続が確立されました (client_id: ${clientId})`),
@@ -57,6 +57,7 @@ const App: FC = () => {
           // 確認後すぐにストリームを停止
           stream.getTracks().forEach(track => track.stop());
         } catch (err) {
+          console.error('カメラへのアクセスに失敗しました:', err);
           throw new Error('カメラへのアクセスが許可されていません。このアプリを使用するには、カメラアクセスを許可してください。');
         }
         
@@ -71,6 +72,7 @@ const App: FC = () => {
             throw new Error('APIサーバーへの接続に失敗しました。');
           }
         } catch (err) {
+          console.error('APIヘルスチェックに失敗しました:', err);
           console.warn('APIヘルスチェックに失敗しました - 開発モードでスキップします');
           // 開発モードでは失敗してもOK（APIがまだ準備できていない可能性があるため）
           if (process.env.NODE_ENV !== 'development') {
@@ -81,7 +83,12 @@ const App: FC = () => {
         setIsLoading(false);
       } catch (err) {
         console.error('初期化中にエラーが発生しました:', err);
-        setError(err.message || 'アプリケーションの初期化中にエラーが発生しました。');
+  
+        // エラーオブジェクトの型を確認
+        const errorMessage = 
+          err instanceof Error ? err.message : 'アプリケーションの初期化中にエラーが発生しました。';
+        
+        setError(errorMessage);
         setIsLoading(false);
       }
     }

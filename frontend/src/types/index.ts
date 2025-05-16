@@ -51,3 +51,10 @@ export interface AppConfig {
     reconnectDelay: number;
   };
 }
+
+// バックエンドAPIのレスポンス型
+export interface IdentifyAnimalResponse {
+  animal: string;
+  confidence: number;
+  filename: string;
+}

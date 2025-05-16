@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, FC } from "react";
+import React, { useState, useEffect, useRef, type FC } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import speechService from "../services/speechService";
 import config from "../config";
@@ -10,15 +10,15 @@ import {
 import "./ConversationPanel.css";
 
 interface ConversationPanelProps {
-  animalType: string;
-  animalName: string;
+  animalType: string; // YOLOの検出クラス名（英語）
+  animalName: string; // 日本語の表示名
   isVisible: boolean;
   onClose: () => void;
   clientId: string;
 }
 
 const ConversationPanel: FC<ConversationPanelProps> = ({
-  animalType,
+  // animalType,
   animalName,
   isVisible,
   onClose,
@@ -41,14 +41,11 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
       onOpen: () => {
         console.log(`WebSocket接続確立: クライアントID = ${clientId}`);
         
-        // ここでのset_animalメッセージ送信を削除
-        // 代わりにidentify-animalエンドポイントが会話相手を設定する
-
         // 初期メッセージを追加
         setMessages([
           {
             role: "assistant",
-            content: `こんにちは！${animalName || "動物"}と会話を始められます。何か質問してください！`,
+            content: `こんにちは！${animalName || "検出されたもの"}と会話を始められます。何か質問してください！`,
             timestamp: new Date(),
           },
         ]);
@@ -120,6 +117,7 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
           }
         }
       } catch (error) {
+        console.error("メッセージの解析エラー:", error);
         // JSONでない場合はテキストメッセージとして処理
         console.log("テキストメッセージを受信しました:", lastMessage.data);
         
@@ -157,7 +155,6 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
   // 音声認識イベントのハンドラ設定
   useEffect(() => {
     const handleSpeech = (transcript: string): void => {
-      console.log('handleSpeech called with transcript:', transcript);
       // 認識されたテキストをメッセージとして追加
       setMessages((prev) => [
         ...prev,
@@ -190,22 +187,12 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
       setIsListening(false);
     };
 
-    // 登録前の状態を確認
-    console.log('Before registration:', speechService.getListenerStats());
-    speechService.debugLogListeners();
-
     // 登録
     speechService.onSpeech(handleSpeech);
     speechService.onStart(handleStart);
     speechService.onEnd(handleEnd);
 
-    // 登録後の状態を確認
-    console.log('After registration:', speechService.getListenerStats());
-    speechService.debugLogListeners();
-
     return () => {
-      // クリーンアップ前の状態を確認
-      console.log('Before cleanup:', speechService.getListenerStats());
       // クリーンアップ - リスナー削除を追加
       speechService.removeSpeechHandler(handleSpeech);
       speechService.removeStartHandler(handleStart);
@@ -223,8 +210,6 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
 
   // 音声認識の開始/停止
   const toggleListening = (): void => {
-    // 現在のリスナー状態をログ
-    console.log('Before toggleListening:', speechService.getListenerStats());
     if (isListening) {
       speechService.stopListening();
     } else {
@@ -238,7 +223,7 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
   return (
     <div className="conversation-panel">
       <div className="conversation-header">
-        <h3>{animalName || "動物"}との会話</h3>
+        <h3>{animalName || "検出されたもの"}との会話</h3>
         <button className="close-btn" onClick={onClose}>
           ×
         </button>
@@ -248,7 +233,7 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
         {messages.map((msg, index) => (
           <div
             key={index}
-            className={`message ${msg.role === "user" ? "user-message" : "animal-message"}`}
+            className={`message ${msg.role === "user" ? "user-message" : "object-message"}`}
           >
             <div className="message-content">{msg.content}</div>
             <div className="message-time">
