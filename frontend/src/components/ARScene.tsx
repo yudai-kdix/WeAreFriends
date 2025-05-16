@@ -7,8 +7,13 @@ import animalData from "../data/animalData";
 import config from '../config';
 import { type AnimalInfo } from '../types';
 
+// ARSceneコンポーネントの引数にclientIdを追加
+interface ARSceneProps {
+  clientId: string;
+}
+
 // ARシーンコンポーネント
-const ARScene: FC = () => {
+const ARScene: FC<ARSceneProps> = ({ clientId }) =>{
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [detectedAnimal, setDetectedAnimal] = useState<string | null>(null);
@@ -17,8 +22,6 @@ const ARScene: FC = () => {
   const [showConversation, setShowConversation] = useState<boolean>(false);
   const [identifyButtonVisible, setIdentifyButtonVisible] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  // WebSocket用のクライアントIDを保持するための状態
-  const [clientId] = useState<string>(`client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
 
   // WebXRサポートのチェック
   useEffect(() => {

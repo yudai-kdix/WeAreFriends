@@ -15,15 +15,7 @@ async def websocket_endpoint(websocket: WebSocket):
     client_id = websocket.query_params.get("client_id", f"client_{datetime.now().timestamp()}")
     logger.info(f"WebSocket接続開始 - client_id: {client_id}")
     
-    # 接続前のConnectionManager状態をログ出力
-    pre_connect_state = manager.get_state_info()
-    logger.info(f"WebSocket接続前のConnectionManager状態: {pre_connect_state}")
-    
     await manager.connect(websocket, client_id)
-    
-    # 接続後のConnectionManager状態をログ出力
-    post_connect_state = manager.get_state_info()
-    logger.info(f"WebSocket接続後のConnectionManager状態: {post_connect_state}")
 
     try:
         while True:
@@ -51,10 +43,6 @@ async def websocket_endpoint(websocket: WebSocket):
                 # 現在の会話相手を取得
                 friend = manager.get_friend(client_id)
                 logger.info(f"メッセージ受信: {content} (相手: {friend})")
-                
-                # 現在の接続状態をログ出力
-                current_state = manager.get_state_info()
-                logger.info(f"メッセージ処理時のConnectionManager状態: {current_state}")
                 
                 # 会話相手が設定されていない場合はデフォルト値を使用
                 if not friend or friend == "default":
