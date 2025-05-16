@@ -7,14 +7,31 @@ import config from './config';
 const App: FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // アプリ起動時に一度だけclient_idを生成または取得
+  const [clientId] = useState<string>(() => {
+    // localStorage から既存のIDを取得
+    const savedClientId = localStorage.getItem('animal_app_client_id');
+    if (savedClientId) {
+      return savedClientId;
+    }
+    
+    // 新しいIDを生成して保存
+    const newClientId = `client_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    localStorage.setItem('animal_app_client_id', newClientId);
+    return newClientId;
+  });
   
-  // WebSocketの状態を監視
-  const { readyState } = useWebSocket(config.websocketEndpoint, {
+  // client_idを含めたWebSocketのURL
+  const socketUrl = `${config.websocketEndpoint}?client_id=${encodeURIComponent(clientId)}`;
+
+  // WebSocketの状態を監視（client_idを含めたURLで接続）
+  const { readyState } = useWebSocket(socketUrl, {
     share: true, // コンポーネント間でWebSocket接続を共有
     shouldReconnect: (closeEvent) => true,
     reconnectAttempts: config.websocket.maxReconnectAttempts,
     reconnectInterval: config.websocket.reconnectDelay,
-    onOpen: () => console.log("App: WebSocket接続が確立されました"),
+    onOpen: () => console.log(`App: WebSocket接続が確立されました (client_id: ${clientId})`),
     onClose: () => console.log("App: WebSocket接続が閉じられました"),
     onError: (error) => console.error("App: WebSocketエラー:", error)
   });
@@ -113,7 +130,7 @@ const App: FC = () => {
       </header>
       
       <main className="app-content">
-        <ARScene />
+        <ARScene clientId={clientId}/>
       </main>
       
       <footer className="app-footer">

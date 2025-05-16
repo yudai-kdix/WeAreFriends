@@ -5,90 +5,88 @@ from app.services.tts_service import synthesize_audio
 from openai import OpenAI
 from dotenv import load_dotenv
 from app.core.logger import logger
+from app.core.prompts import get_prompt, DEFAULT_PROMPT
 
+# 環境変数読み込みと GPT クライアント初期化
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-class AudioProcessor():
+class AudioProcessor:
+    """
+    GPTと対話しつつ音声合成を行うプロセッサ。
+    会話履歴を保持し、session_idごとにキャッシュされる。
+    """
     def __init__(self, target: str = "犬"):
-        self.friend: str = target
-        self.messages: list[dict[str, str]] = [
-            {"role": "system", "content": self.get_prompt()}
+        self.friend = target
+        # 使用モデル名（必要に応じて変更）
+        self.model_name = "gpt-3.5-turbo"
+        # prompts.json からプロンプトを取得、見つからなければデフォルトを使用
+        prompt_text = get_prompt(self.model_name, self.friend)
+        self.messages = [
+            {"role": "system", "content": prompt_text}
         ]
+        logger.info(f"AudioProcessor 初期化: friend={self.friend}, prompt={prompt_text}")
 
-    # 対話相手のキャラクター設定に基づいたシステムプロンプトを生成します。
-    def get_prompt(self) -> str:
-        template = "あなたは{friend}です。語尾を{friend}のようにして会話してください。"
-        return template.format(friend=self.friend)
-
-    # ユーザーの入力に基づいてGPTモデルと会話し、応答テキストと音声データを生成します。
-    #
-    # Args:
-    #     user_input: ユーザーからの入力テキスト。
-    #
-    # Returns:
-    #     GPTからの応答テキストと、その応答を音声合成したBase64エンコード文字列のタプル。
     def chat(self, user_input: str) -> tuple[str, str]:
+        # 会話履歴にユーザーメッセージ追加
         self.messages.append({"role": "user", "content": user_input})
-
+        # GPT呼び出し
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=self.messages
         )
-        reply: str = response.choices[0].message.content
-        self.messages.append({"role": "assistant", "content": reply})
+        reply_text = response.choices[0].message.content
+        # 履歴にアシスタント応答追加
+        self.messages.append({"role": "assistant", "content": reply_text})
 
-        # 音声合成
-        reply, audio_b64 = synthesize_audio(reply)
+        # テキストを音声に変換
+        reply, audio_b64 = synthesize_audio(reply_text)
 
         return reply, audio_b64
 
-    # 受信した音声データを処理し、GPTとの対話結果を返します。
-    # 現状、受信した音声データの文字起こしは行わず、固定のユーザー入力を使用します。
-    #
-    # Args:
-    #     data: Base64エンコードされた音声データ。
-    #     filename: 受信した音声ファイルの元の名前。
-    #
-    # Returns:
-    #     処理結果を示すメッセージ文字列。
     def process(self, data: str, filename: str) -> str:
-        # 音声データをファイルとして保存
+        # 音声保存
         try:
-            file_data = base64.b64decode(data)
             os.makedirs("received_audios", exist_ok=True)
-            file_path = os.path.join("received_audios", filename)
-            with open(file_path, "wb") as f:
+            file_data = base64.b64decode(data)
+            path = os.path.join("received_audios", filename)
+            with open(path, "wb") as f:
                 f.write(file_data)
-            save_message = f"Audio saved as {file_path}."
+            save_msg = f"音声を保存しました: {path}"
         except Exception as e:
-            save_message = f"Failed to save audio: {e}"
-            return save_message
+            logger.error(f"音声保存失敗: {e}")
+            return f"音声の保存に失敗しました: {e}"
+        # 文字起こしは未実装のため仮発話
+        logger.warning("文字起こし未実装: 仮入力でGPT応答を生成")
+        simulated = "こんにちは、何が見られる？"
+        reply, _ = self.chat(simulated)
+        return f"{save_msg} | GPT ({self.friend}) says: {reply}"
 
-        # TODO: Whisperなどでの文字起こし処理に置き換える
-        logger.warning("音声の文字起こしはまだ実装されていません。仮の入力で返答を行います。")
+# session_idごとにAudioProcessorをキャッシュ
+_audio_processors: dict[str, AudioProcessor] = {}
 
-        # 仮入力で GPT 応答
-        simulated_input = "こんにちは、何が見られる？"
-        reply, _ = self.chat(simulated_input)
+def get_processor(session_id: str, friend: str) -> AudioProcessor:
+    key = f"{session_id}:{friend}"
+    if key not in _audio_processors:
+        _audio_processors[key] = AudioProcessor(target=friend)
+    return _audio_processors[key]
 
-        return f"{save_message} GPT ({self.friend}) says: {reply}"
 
-def chat(text: str, friend: str) -> tuple[str, str]:
+def chat(text: str, session_id: str, friend: str) -> tuple[str, str]:
     """
-    AudioProcessorを使って、GPTの返答テキストと音声(Base64)を生成して返す
+    指定のsession_idとfriendでGPT会話および音声合成を実行
     """
-    processor = AudioProcessor(target=friend)
-    reply_text, audio_b64 = processor.chat(text)
-    # logger.info(f"チャット応答: {reply_text}")
+    proc = get_processor(session_id, friend)
+    reply_text, audio_b64 = proc.chat(text)
+    logger.info(f"チャット応答: {reply_text}")
     return reply_text, audio_b64
 
 
-def process_audio(audio_b64: str, filename: str, friend: str) -> str:
+def process_audio(audio_b64: str, filename: str, session_id: str, friend: str) -> str:
     """
-    AudioProcessorを使って、Base64音声データを保存・処理し、GPT応答テキストを返す
+    指定のsession_idとfriendで音声保存とGPT応答を実行
     """
-    processor = AudioProcessor(target=friend)
-    result = processor.process(audio_b64, filename)
-    # logger.info(f"音声処理結果: {result}")
+    proc = get_processor(session_id, friend)
+    result = proc.process(audio_b64, filename)
+    logger.info(f"音声処理結果: {result}")
     return result

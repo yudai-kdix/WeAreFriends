@@ -12,6 +12,7 @@ interface SpeechBubbleProps {
   animalName?: string;
   color?: string;
   isInteractive?: boolean;
+  clientId?: string;  // clientIdプロパティを追加
 }
 
 // 吹き出しコンポーネント
@@ -20,7 +21,8 @@ const SpeechBubble: FC<SpeechBubbleProps> = ({
   message, 
   animalName, 
   color = '#ffffff', 
-  isInteractive = true 
+  isInteractive = true ,
+  clientId
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const rotationRef = useRef<{ x: number, y: number, z: number }>({ x: 0, y: 0, z: 0 });
@@ -31,9 +33,14 @@ const SpeechBubble: FC<SpeechBubbleProps> = ({
   const messageQueue = useRef<string[]>([]);
   const [isTalking, setIsTalking] = useState<boolean>(false);
   const processedMessageIds = useRef<Set<string>>(new Set()); // 処理済みメッセージIDを追跡
+
+  // WebSocketURLにclientIdを含める
+  const socketUrl = clientId 
+    ? `${config.websocketEndpoint}?client_id=${encodeURIComponent(clientId)}`
+    : config.websocketEndpoint;
   
   // WebSocketを使用して吹き出しのメッセージを更新（インタラクティブモードでのみ有効）
-  const { lastMessage } = isInteractive ? useWebSocket<WebSocketIncomingMessage>(config.websocketEndpoint, {
+  const { lastMessage } = isInteractive ? useWebSocket<WebSocketIncomingMessage>(socketUrl, {
     // パネルが表示されている時のみ接続
     share: true, // コンポーネント間でWebSocket接続を共有
     shouldReconnect: (closeEvent) => false, // ConversationPanelで再接続を管理
