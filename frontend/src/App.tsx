@@ -1,4 +1,4 @@
-import React, { useState, useEffect, type FC } from 'react';
+import { useState, useEffect, type FC } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import './styles.css';
 import ARScene from './components/ARScene';

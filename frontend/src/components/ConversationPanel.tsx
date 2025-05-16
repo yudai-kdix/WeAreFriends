@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, type FC } from "react";
+import { useState, useEffect, useRef, type FC } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import speechService from "../services/speechService";
 import config from "../config";
