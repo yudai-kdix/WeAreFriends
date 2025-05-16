@@ -1,4 +1,6 @@
-FROM --platform=\${BUILDPLATFORM:-linux/amd64} python:3.10-slim
+# FROM --platform=\${BUILDPLATFORM:-linux/amd64} python:3.10-slim
+# pythonのバージョンを3.12に変えて
+FROM --platform=${BUILDPLATFORM:-linux/amd64} python:3.12-slim
 
 WORKDIR /app
 

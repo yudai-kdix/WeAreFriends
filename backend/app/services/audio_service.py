@@ -1,7 +1,7 @@
 import os
 import io
 import base64
-from gtts import gTTS
+from app.services.tts_service import synthesize_audio
 from openai import OpenAI
 from dotenv import load_dotenv
 from app.core.logger import logger
@@ -38,12 +38,8 @@ class AudioProcessor():
         reply: str = response.choices[0].message.content
         self.messages.append({"role": "assistant", "content": reply})
 
-        # テキストを音声に変換
-        tts = gTTS(text=reply, lang="ja")
-        buffer = io.BytesIO()
-        tts.write_to_fp(buffer)
-        buffer.seek(0)
-        audio_b64 = base64.b64encode(buffer.read()).decode("utf-8")
+        # 音声合成
+        reply, audio_b64 = synthesize_audio(reply)
 
         return reply, audio_b64
 
