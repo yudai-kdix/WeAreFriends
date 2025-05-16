@@ -26,10 +26,6 @@ async def identify_animal(
         logger.info(f"identify-animal エンドポイントが呼ばれました - client_id: {client_id}")
         logger.info(f"User-Agent: {user_agent}")
         
-        # ConnectionManagerの現在の状態を確認
-        manager_state = manager.get_state_info()
-        logger.info(f"現在のConnectionManager状態: {manager_state}")
-        
         # Base64エンコードされた画像データを取得
         if "image" not in data:
             raise HTTPException(status_code=400, detail="Image data is required")
@@ -79,7 +75,6 @@ async def identify_animal(
                             client_id, 
                             WebSocketMessage(type="text", data=notification).dict()
                         )
-                        logger.info(f"クライアント {client_id} の会話相手を {animal} に設定しました")
                     else:
                         logger.warning(f"クライアント {client_id} の会話相手の設定に失敗しました")
         else:

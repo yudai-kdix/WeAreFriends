@@ -145,8 +145,6 @@ class ImageProcessor:
             except Exception as e:
                 logger.warning(f"[警告] 元画像の削除に失敗しました: {e}")
             
-            # 検出物体の名前と信頼度を返す
-            logger.info(f"検出された物体: {label} (信頼度: {confidence:.2f})")
             return label, confidence
             
         except Exception as e:

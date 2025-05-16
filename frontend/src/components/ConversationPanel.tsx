@@ -14,7 +14,7 @@ interface ConversationPanelProps {
   animalName: string;
   isVisible: boolean;
   onClose: () => void;
-  clientId?: string; // クライアントIDを追加（オプショナルにして後方互換性を保持）
+  clientId: string;
 }
 
 const ConversationPanel: FC<ConversationPanelProps> = ({
@@ -22,7 +22,7 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
   animalName,
   isVisible,
   onClose,
-  clientId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // デフォルト値を設定
+  clientId
 }) => {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [isListening, setIsListening] = useState<boolean>(false);
@@ -37,7 +37,7 @@ const ConversationPanel: FC<ConversationPanelProps> = ({
   const { sendMessage, lastMessage, readyState } = useWebSocket(
     socketUrl,
     {
-      share: false, // クライアントIDごとに別々の接続が必要なためfalseに変更
+      share: true,
       onOpen: () => {
         console.log(`WebSocket接続確立: クライアントID = ${clientId}`);
         
