@@ -5,6 +5,7 @@ from gtts import gTTS
 from openai import OpenAI
 from dotenv import load_dotenv
 from app.core.logger import logger
+from app.core.prompts import get_prompt, DEFAULT_PROMPT
 
 # 環境変数読み込みと GPT クライアント初期化
 load_dotenv()
@@ -17,10 +18,14 @@ class AudioProcessor:
     """
     def __init__(self, target: str = "犬"):
         self.friend = target
+        # 使用モデル名（必要に応じて変更）
+        self.model_name = "gpt-3.5-turbo"
+        # prompts.json からプロンプトを取得、見つからなければデフォルトを使用
+        prompt_text = get_prompt(self.model_name, self.friend)
         self.messages = [
-            {"role": "system", "content": f"あなたは{target}です。語尾を{target}のようにして会話してください。"}
+            {"role": "system", "content": prompt_text}
         ]
-        logger.info(f"AudioProcessor 初期化: friend={target}")
+        logger.info(f"AudioProcessor 初期化: friend={self.friend}, prompt={prompt_text}")
 
     def chat(self, user_input: str) -> tuple[str, str]:
         # 会話履歴にユーザーメッセージ追加
