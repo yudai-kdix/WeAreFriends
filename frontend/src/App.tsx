@@ -1,8 +1,69 @@
-import { useState, useEffect, type FC } from 'react';
-import useWebSocket, { ReadyState } from 'react-use-websocket';
-import './styles.css';
-import ARScene from './components/ARScene';
-import config from './config';
+import { useState, useEffect, type FC } from "react";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import useWebSocket, { ReadyState } from "react-use-websocket";
+import "./styles.css";
+import ARScene from "./components/ARScene";
+import ManageScreen from "./pages/manageScreen";
+import config from "./config";
+
+// メインページのコンポーネント化
+const MainPage: FC<{ clientId: string; websocketStatus: string }> = ({
+  clientId,
+  websocketStatus,
+}) => {
+  return (
+    <div className="app">
+      <header className="app-header">
+        <h1>動物園AR体験</h1>
+        <nav className="navigation">
+          <Link to="/manage" className="nav-link">
+            識別対象管理
+          </Link>
+        </nav>
+        {websocketStatus === "connected" && (
+          <div className="connection-badge connected">サーバー接続中</div>
+        )}
+        {websocketStatus === "disconnected" && (
+          <div className="connection-badge error">サーバー未接続</div>
+        )}
+        {websocketStatus === "connecting" && (
+          <div className="connection-badge connecting">接続中...</div>
+        )}
+      </header>
+
+      <main className="app-content">
+        <ARScene clientId={clientId} />
+      </main>
+
+      <footer className="app-footer">
+        <p>動物にカメラを向けて「動物を識別」ボタンを押してください</p>
+        <p>動物と会話を楽しんでみましょう</p>
+        {websocketStatus === "disconnected" && (
+          <p className="connection-warning">
+            サーバーに接続されていません。会話機能が利用できない場合があります。
+          </p>
+        )}
+      </footer>
+    </div>
+  );
+};
+
+// ナビゲーション付きレイアウトコンポーネント
+const Layout: FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <div className="layout">
+      <nav className="global-nav">
+        <Link to="/" className="nav-link">
+          ホーム
+        </Link>
+        <Link to="/manage" className="nav-link">
+          識別対象管理
+        </Link>
+      </nav>
+      {children}
+    </div>
+  );
+};
 
 const App: FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -11,19 +72,23 @@ const App: FC = () => {
   // アプリ起動時に一度だけclient_idを生成または取得
   const [clientId] = useState<string>(() => {
     // localStorage から既存のIDを取得
-    const savedClientId = localStorage.getItem('animal_app_client_id');
+    const savedClientId = localStorage.getItem("animal_app_client_id");
     if (savedClientId) {
       return savedClientId;
     }
-    
+
     // 新しいIDを生成して保存
-    const newClientId = `client_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    localStorage.setItem('animal_app_client_id', newClientId);
+    const newClientId = `client_${Date.now()}_${Math.random()
+      .toString(36)
+      .substring(2, 9)}`;
+    localStorage.setItem("animal_app_client_id", newClientId);
     return newClientId;
   });
-  
+
   // client_idを含めたWebSocketのURL
-  const socketUrl = `${config.websocketEndpoint}?client_id=${encodeURIComponent(clientId)}`;
+  const socketUrl = `${config.websocketEndpoint}?client_id=${encodeURIComponent(
+    clientId
+  )}`;
 
   // WebSocketの状態を監視（client_idを含めたURLで接続）
   const { readyState } = useWebSocket(socketUrl, {
@@ -31,18 +96,21 @@ const App: FC = () => {
     shouldReconnect: () => true,
     reconnectAttempts: config.websocket.maxReconnectAttempts,
     reconnectInterval: config.websocket.reconnectDelay,
-    onOpen: () => console.log(`App: WebSocket接続が確立されました (client_id: ${clientId})`),
+    onOpen: () =>
+      console.log(
+        `App: WebSocket接続が確立されました (client_id: ${clientId})`
+      ),
     onClose: () => console.log("App: WebSocket接続が閉じられました"),
-    onError: (error) => console.error("App: WebSocketエラー:", error)
+    onError: (error) => console.error("App: WebSocketエラー:", error),
   });
 
   // WebSocketの接続状態
   const websocketStatus = {
-    [ReadyState.CONNECTING]: 'connecting',
-    [ReadyState.OPEN]: 'connected',
-    [ReadyState.CLOSING]: 'closing',
-    [ReadyState.CLOSED]: 'disconnected',
-    [ReadyState.UNINSTANTIATED]: 'uninstantiated',
+    [ReadyState.CONNECTING]: "connecting",
+    [ReadyState.OPEN]: "connected",
+    [ReadyState.CLOSING]: "closing",
+    [ReadyState.CLOSED]: "disconnected",
+    [ReadyState.UNINSTANTIATED]: "uninstantiated",
   }[readyState];
 
   // カメラとAPIの可用性をチェック
@@ -50,44 +118,54 @@ const App: FC = () => {
     async function checkRequirements() {
       try {
         setIsLoading(true);
-        
+
         // カメラにアクセス可能か確認
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
           // 確認後すぐにストリームを停止
-          stream.getTracks().forEach(track => track.stop());
+          stream.getTracks().forEach((track) => track.stop());
         } catch (err) {
-          console.error('カメラへのアクセスに失敗しました:', err);
-          throw new Error('カメラへのアクセスが許可されていません。このアプリを使用するには、カメラアクセスを許可してください。');
+          console.error("カメラへのアクセスに失敗しました:", err);
+          throw new Error(
+            "カメラへのアクセスが許可されていません。このアプリを使用するには、カメラアクセスを許可してください。"
+          );
         }
-        
+
         // バックエンドAPIへの接続をチェック
         try {
-          const response = await fetch(`${config.apiBaseUrl}/health-check`, { 
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
+          const response = await fetch(`${config.apiBaseUrl}/health-check`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
           });
-          
+
           if (!response.ok) {
-            throw new Error('APIサーバーへの接続に失敗しました。');
+            throw new Error("APIサーバーへの接続に失敗しました。");
           }
         } catch (err) {
-          console.error('APIヘルスチェックに失敗しました:', err);
-          console.warn('APIヘルスチェックに失敗しました - 開発モードでスキップします');
+          console.error("APIヘルスチェックに失敗しました:", err);
+          console.warn(
+            "APIヘルスチェックに失敗しました - 開発モードでスキップします"
+          );
           // 開発モードでは失敗してもOK（APIがまだ準備できていない可能性があるため）
-          if (process.env.NODE_ENV !== 'development') {
-            throw new Error('APIサーバーへの接続に失敗しました。インターネット接続を確認してください。');
+          if (process.env.NODE_ENV !== "development") {
+            throw new Error(
+              "APIサーバーへの接続に失敗しました。インターネット接続を確認してください。"
+            );
           }
         }
-        
+
         setIsLoading(false);
       } catch (err) {
-        console.error('初期化中にエラーが発生しました:', err);
-  
+        console.error("初期化中にエラーが発生しました:", err);
+
         // エラーオブジェクトの型を確認
-        const errorMessage = 
-          err instanceof Error ? err.message : 'アプリケーションの初期化中にエラーが発生しました。';
-        
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "アプリケーションの初期化中にエラーが発生しました。";
+
         setError(errorMessage);
         setIsLoading(false);
       }
@@ -113,41 +191,31 @@ const App: FC = () => {
       <div className="error-container">
         <h2>エラーが発生しました</h2>
         <p>{error}</p>
-        <button onClick={() => window.location.reload()}>
-          再試行
-        </button>
+        <button onClick={() => window.location.reload()}>再試行</button>
       </div>
     );
   }
 
-  // メインアプリ
+  // メインアプリ（ルーティングを追加）
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>動物園AR体験</h1>
-        {websocketStatus === 'connected' && (
-          <div className="connection-badge connected">サーバー接続中</div>
-        )}
-        {websocketStatus === 'disconnected' && (
-          <div className="connection-badge error">サーバー未接続</div>
-        )}
-        {websocketStatus === 'connecting' && (
-          <div className="connection-badge connecting">接続中...</div>
-        )}
-      </header>
-      
-      <main className="app-content">
-        <ARScene clientId={clientId}/>
-      </main>
-      
-      <footer className="app-footer">
-        <p>動物にカメラを向けて「動物を識別」ボタンを押してください</p>
-        <p>動物と会話を楽しんでみましょう</p>
-        {websocketStatus === 'disconnected' && (
-          <p className="connection-warning">サーバーに接続されていません。会話機能が利用できない場合があります。</p>
-        )}
-      </footer>
-    </div>
+    <Router>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <MainPage clientId={clientId} websocketStatus={websocketStatus} />
+          }
+        />
+        <Route
+          path="/manage"
+          element={
+            <Layout>
+              <ManageScreen />
+            </Layout>
+          }
+        />
+      </Routes>
+    </Router>
   );
 };
 
