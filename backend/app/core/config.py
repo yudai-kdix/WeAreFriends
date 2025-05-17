@@ -13,6 +13,10 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str
 
+    # データベース設定
+    DATABASE_URL: str
+    ALEMBIC_DATABASE_URL: str
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
