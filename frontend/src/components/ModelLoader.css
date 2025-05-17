@@ -1,0 +1,96 @@
+/* src/components/ModelLoader.css */
+.model-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 900;
+}
+
+.loader-container {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  max-width: 80%;
+  width: 300px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.loader-container h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 10px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(to right, #4a6fa5, #6ac0ff);
+  transition: width 0.3s ease;
+  border-radius: 5px;
+}
+
+.loader-container p {
+  margin: 5px 0;
+  color: #444;
+  font-size: 14px;
+}
+
+.loader-message {
+  min-height: 1.4em;
+  font-style: italic;
+  color: #666 !important;
+}
+
+/* アニメーション */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.model-loader .loader-container {
+  animation: pulse 2s infinite;
+}
+
+/* モデルロード完了時のアニメーション */
+.model-loaded .progress-bar {
+  background: linear-gradient(to right, #4CAF50, #8BC34A);
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 600px) {
+  .loader-container {
+    width: 250px;
+    padding: 15px;
+  }
+  
+  .loader-container h3 {
+    font-size: 16px;
+  }
+  
+  .loader-container p {
+    font-size: 12px;
+  }
+}
