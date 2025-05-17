@@ -57,4 +57,10 @@ export interface IdentifyAnimalResponse {
   animal: string;
   confidence: number;
   filename: string;
+  boundingBox: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }
 }
