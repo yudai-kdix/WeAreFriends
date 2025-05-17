@@ -1,7 +1,6 @@
 // src/components/ObjectTracking.tsx
 
 import React, { useEffect, useRef } from 'react';
-import * as cocoSsd from '@tensorflfow-models/coco-ssd';
 import '@tensorflow/tfjs';
 import { useModel } from '../contexts/ModelContext';
 
@@ -145,7 +144,7 @@ const ObjectTracking: React.FC<ObjectTrackingProps> = ({
           
           // ビデオサイズに対して正規化された位置情報を計算
           const normalizedPosition = {
-            x: 1 - (x / video.videoWidth) - (width / video.videoWidth), // X座標を反転
+            x: x / video.videoWidth,
             y: y / video.videoHeight,
             width: width / video.videoWidth,
             height: height / video.videoHeight

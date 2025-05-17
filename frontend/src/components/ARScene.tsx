@@ -356,12 +356,6 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
     }
   };
 
-  // 吹き出しクリック処理
-  const handleSpeechBubbleClick = () => {
-    setShowConversation(true);
-    setShowSpeechBubble(false);
-  };
-
   // ARボタンが利用可能かどうか
   const renderARButton = (): React.ReactNode => {
     if (isXRSupported) {
@@ -496,7 +490,6 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
           width: "100%",
           height: "100%",
           objectFit: "cover",
-          transform: "scaleX(-1)", // 自撮りモードのミラー効果
         }}
         autoPlay
         playsInline
