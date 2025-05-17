@@ -254,20 +254,6 @@ const App: FC = () => {
       try {
         setIsLoading(true);
 
-        // カメラにアクセス可能か確認
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-          });
-          // 確認後すぐにストリームを停止
-          stream.getTracks().forEach((track) => track.stop());
-        } catch (err) {
-          console.error("カメラへのアクセスに失敗しました:", err);
-          throw new Error(
-            "カメラへのアクセスが許可されていません。このアプリを使用するには、カメラアクセスを許可してください。"
-          );
-        }
-
         // バックエンドAPIへの接続をチェック
         try {
           const response = await fetch(`${config.apiBaseUrl}/health-check`, {
