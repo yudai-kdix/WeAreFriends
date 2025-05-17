@@ -6,6 +6,17 @@ import ARScene from "./components/ARScene";
 import ManageScreen from "./pages/manageScreen";
 import HomePage from "./pages/HomePage";
 import config from "./config";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Container,
+  Box,
+} from "@mui/material";
+import HomeIcon from "@mui/icons-material/Home";
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import SettingsIcon from "@mui/icons-material/Settings";
 
 // カメラページのコンポーネント化
 const CameraPage: FC<{ clientId: string; websocketStatus: string }> = ({
@@ -15,24 +26,64 @@ const CameraPage: FC<{ clientId: string; websocketStatus: string }> = ({
   return (
     <div className="app">
       <header className="app-header">
-        <h1>動物園AR体験</h1>
-        <nav className="navigation">
-          <Link to="/" className="nav-link">
-            ホーム
-          </Link>
-          <Link to="/manage" className="nav-link">
-            識別対象管理
-          </Link>
-        </nav>
-        {websocketStatus === "connected" && (
-          <div className="connection-badge connected">サーバー接続中</div>
-        )}
-        {websocketStatus === "disconnected" && (
-          <div className="connection-badge error">サーバー未接続</div>
-        )}
-        {websocketStatus === "connecting" && (
-          <div className="connection-badge connecting">接続中...</div>
-        )}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            width: "100%",
+          }}
+        >
+          <Typography
+            variant="h5"
+            component="h1"
+            sx={{ fontWeight: "bold", color: "white" }}
+          >
+            動物園AR体験
+          </Typography>
+
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button
+              component={Link}
+              to="/"
+              color="inherit"
+              startIcon={<HomeIcon />}
+              sx={{
+                borderRadius: 2,
+                backgroundColor: "rgba(255, 255, 255, 0.2)",
+                padding: "6px 12px",
+                fontSize: "0.9rem",
+                transition: "all 0.2s",
+                "&:hover": {
+                  backgroundColor: "rgba(255, 255, 255, 0.3)",
+                  transform: "translateY(-2px)",
+                },
+              }}
+            >
+              ホーム
+            </Button>
+          </Box>
+        </Box>
+
+        {/* WebSocket接続ステータス表示 */}
+        <Box
+          sx={{
+            mt: 1,
+            display: "flex",
+            justifyContent: "center",
+            width: "100%",
+          }}
+        >
+          {websocketStatus === "connected" && (
+            <div className="connection-badge connected">サーバー接続中</div>
+          )}
+          {websocketStatus === "disconnected" && (
+            <div className="connection-badge error">サーバー未接続</div>
+          )}
+          {websocketStatus === "connecting" && (
+            <div className="connection-badge connecting">接続中...</div>
+          )}
+        </Box>
       </header>
 
       <main className="app-content">
@@ -56,18 +107,86 @@ const CameraPage: FC<{ clientId: string; websocketStatus: string }> = ({
 const Layout: FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="layout">
-      <nav className="global-nav">
-        <Link to="/" className="nav-link">
-          ホーム
-        </Link>
-        <Link to="/camera" className="nav-link">
-          カメラ
-        </Link>
-        <Link to="/manage" className="nav-link">
-          識別対象管理
-        </Link>
-      </nav>
-      {children}
+      <AppBar position="static" color="primary" elevation={3}>
+        <Container maxWidth="lg">
+          <Toolbar sx={{ justifyContent: "space-between" }}>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 0 }}>
+              We Are Friends
+            </Typography>
+            
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                component={Link}
+                to="/"
+                color="inherit"
+                startIcon={<HomeIcon />}
+                sx={{
+                  borderRadius: 2,
+                  padding: '8px 16px',
+                  transition: 'background-color 0.3s',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  },
+                }}
+              >
+                ホーム
+              </Button>
+              
+              <Button
+                component={Link}
+                to="/camera"
+                color="inherit"
+                startIcon={<CameraAltIcon />}
+                sx={{
+                  borderRadius: 2,
+                  padding: '8px 16px',
+                  transition: 'background-color 0.3s',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  },
+                }}
+              >
+                カメラ
+              </Button>
+              
+              <Button
+                component={Link}
+                to="/manage"
+                color="inherit"
+                startIcon={<SettingsIcon />}
+                sx={{
+                  borderRadius: 2,
+                  padding: '8px 16px',
+                  transition: 'background-color 0.3s',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  },
+                }}
+              >
+                識別対象管理
+              </Button>
+            </Box>
+          </Toolbar>
+        </Container>
+      </AppBar>
+      <Container component="main" sx={{ py: 4 }}>
+        {children}
+      </Container>
+      <Box 
+        component="footer"
+        sx={{
+          py: 3,
+          px: 2,
+          mt: 'auto',
+          backgroundColor: theme => theme.palette.grey[100]
+        }}
+      >
+        <Container maxWidth="lg">
+          <Typography variant="body2" color="text.secondary" align="center">
+            © 2025 We Are Friends - カメラを通して新しい友達と出会おう
+          </Typography>
+        </Container>
+      </Box>
     </div>
   );
 };
