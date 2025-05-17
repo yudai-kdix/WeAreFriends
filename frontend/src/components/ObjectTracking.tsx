@@ -26,7 +26,7 @@ const ObjectTracking: React.FC<ObjectTrackingProps> = ({
   
   const requestAnimationRef = useRef<number | null>(null);
   const lastDetectionTimeRef = useRef<number>(0);
-  const detectionIntervalRef = useRef<number>(100); // ミリ秒単位で検出間隔を設定
+  const detectionIntervalRef = useRef<number>(10); // ミリ秒単位で検出間隔を設定
   
   // コンポーネントのマウント時に追跡を開始
   useEffect(() => {
@@ -145,7 +145,7 @@ const ObjectTracking: React.FC<ObjectTrackingProps> = ({
           
           // ビデオサイズに対して正規化された位置情報を計算
           const normalizedPosition = {
-            x: x / video.videoWidth,
+            x: 1 - (x / video.videoWidth) - (width / video.videoWidth), // X座標を反転
             y: y / video.videoHeight,
             width: width / video.videoWidth,
             height: height / video.videoHeight
