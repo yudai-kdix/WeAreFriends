@@ -23,9 +23,7 @@ RUN printf "deb http://ftp.jp.debian.org/debian bullseye main contrib non-free\n
         > /etc/apt/sources.list && \
     apt-get update
 
-RUN apt-get clean && rm -rf /var/lib/apt/lists/* \
-    && apt-get update \
-    && apt-get install -y --fix-missing libopencv-dev
+RUN apt-get install -y libopencv-dev
 
 # アプリケーションコードをコピー
 COPY . .

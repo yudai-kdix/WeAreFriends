@@ -7,6 +7,7 @@ from app.core.logger import logger
 from app.routers.health import router as health_router
 from app.routers.identify import router as identify_router
 from app.routers.websocket import router as ws_router
+from app.routers.organization import router as organization_router
 
 settings = Settings()
 
@@ -37,6 +38,7 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(identify_router)
 app.include_router(ws_router)
+app.include_router(organization_router)
 
 if __name__ == "__main__":
     import uvicorn

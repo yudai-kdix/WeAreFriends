@@ -1,3 +1,4 @@
+.PHONY: backend frontend 
 ##########ビルド系
 init:  #新規のビルド
 	docker compose -f compose.yml up -d --build
