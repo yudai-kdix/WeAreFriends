@@ -6,7 +6,7 @@ import { useModel } from '../contexts/ModelContext';
 
 // ObjectTrackingコンポーネントのプロパティ定義
 interface ObjectTrackingProps {
-  videoRef: React.RefObject<HTMLVideoElement>;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   detectedAnimal: string;
   onPositionUpdate: (position: { x: number; y: number; width: number; height: number } | null) => void;
   showDebugInfo?: boolean;

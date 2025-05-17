@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Box, Container, Typography, Button, Paper, Grid } from '@mui/material';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -16,8 +15,10 @@ const HomePage: React.FC = () => {
           カメラで物体を識別し、会話を楽しむAR体験アプリケーション
         </Typography>
         
+        {/* v7では container プロパティをそのまま使用し、item プロパティの代わりに size プロパティを使用 */}
         <Grid container spacing={4} justifyContent="center" sx={{ mt: 2 }}>
-          <Grid item xs={12} sm={6}>
+          {/* size={12} は全幅、size={6} は半分の幅を表す */}
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Paper 
               elevation={2} 
               sx={{ 
@@ -47,7 +48,7 @@ const HomePage: React.FC = () => {
             </Paper>
           </Grid>
           
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Paper 
               elevation={2} 
               sx={{ 

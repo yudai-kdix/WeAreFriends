@@ -7,7 +7,7 @@ import ObjectTracking from "./ObjectTracking";
 import AnimatedSpeechBubble from "./AnimatedSpeechBubble";
 import ModelLoader from "./ModelLoader";
 import { useModel } from "../contexts/ModelContext";
-import { ConversationProvider, useConversation } from '../contexts/ConversationContext';
+import { useConversation } from '../contexts/ConversationContext';
 import { getObjectInfo } from '../utils/objectInfoUtils';
 import IdentifyButton from "./IdentifyButton";
 import MicButton from "./MicButton";
@@ -75,6 +75,7 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
     if (model) {
       setIsModelLoaded(true);
       setIdentifyButtonVisible(true);
+      setShowDebugInfo(false);
     } else {
       setIsModelLoaded(false);
     }
