@@ -49,3 +49,10 @@ yarn-error.log
 Thumbs.db
 
 *.jpg
+# .envファイル
+.env
+.env.local
+.env.development
+.env.development.local
+.env.production
+.env.production.local

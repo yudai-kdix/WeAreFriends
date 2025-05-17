@@ -2,18 +2,34 @@
 import { type AppConfig } from './types';
 
 // 環境に応じた設定
-const isDevelopment = process.env.NODE_ENV === 'development';
+const isDevelopment = import.meta.env.DEV;
+
+// 環境変数が存在する場合は使用し
+const getApiHost = () => {
+  if (isDevelopment) return 'localhost:8000';
+  // 本番環境では環境変数が必須
+  if (!import.meta.env.VITE_API_HOST) {
+    console.error('本番環境では VITE_API_HOST 環境変数が必要です');
+  }
+  return import.meta.env.VITE_API_HOST || '';
+};
+
+const getApiProtocol = () => {
+  if (isDevelopment) return 'http';
+  return import.meta.env.VITE_API_PROTOCOL || 'https';
+};
+
+const getWsProtocol = () => {
+  if (isDevelopment) return 'ws';
+  return import.meta.env.VITE_WS_PROTOCOL || 'wss';
+};
 
 const config: AppConfig = {
   // WebSocketエンドポイント
-  websocketEndpoint: isDevelopment 
-    ? 'ws://localhost:8000/ws'
-    : 'wss://your-production-server.com/ws',
+  websocketEndpoint: `${getWsProtocol()}://${getApiHost()}/ws`,
   
   // REST APIエンドポイント
-  apiBaseUrl: isDevelopment
-    ? 'http://localhost:8000'
-    : 'https://your-production-server.com/api',
+  apiBaseUrl: `${getApiProtocol()}://${getApiHost()}`,
   
   // 音声認識の言語設定
   speechRecognitionLang: 'ja-JP',
