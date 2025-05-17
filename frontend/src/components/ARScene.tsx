@@ -1,18 +1,17 @@
 import React, { useEffect, useRef, useState, type FC } from "react";
-// import { Canvas } from "@react-three/fiber";
-// import { XR } from "@react-three/xr";
-// import SpeechBubble from "./SpeechBubble";
 import ConversationPanel from "./ConversationPanel";
 import config from '../config';
 import objectNameMapping from "../data/objectNameMapping";
 import { type IdentifyAnimalResponse } from "../types/index";
+import ObjectTracking from "./ObjectTracking";
+import AnimatedSpeechBubble from "./AnimatedSpeechBubble";
 
 // ARSceneコンポーネントの引数にclientIdを追加
 interface ARSceneProps {
   clientId: string;
 }
 
-// 検出された対象の情報を格納するインターフェース（バックエンドではより詳細なデータを使用）
+// 検出された対象の情報を格納するインターフェース
 interface ObjectInfo {
   name: string;
   description: string;
@@ -21,16 +20,27 @@ interface ObjectInfo {
   prompt?: string;
 }
 
+// バウンディングボックスの型定義
+interface BoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 // ARシーンコンポーネント
-const ARScene: FC<ARSceneProps> = ({ clientId }) =>{
+const ARScene: FC<ARSceneProps> = ({ clientId }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  // const canvasRef = useRef<HTMLCanvasElement>(null);
   const [detectedObject, setDetectedObject] = useState<string | null>(null);
   const [isXRSupported, setIsXRSupported] = useState<boolean>(false);
   const [isUsingAR, setIsUsingAR] = useState<boolean>(false);
   const [showConversation, setShowConversation] = useState<boolean>(false);
   const [identifyButtonVisible, setIdentifyButtonVisible] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [objectPosition, setObjectPosition] = useState<BoundingBox | null>(null);
+  const [initialPosition, setInitialPosition] = useState<BoundingBox | null>(null);
+  const [showSpeechBubble, setShowSpeechBubble] = useState<boolean>(false);
+  const [showDebugInfo, setShowDebugInfo] = useState<boolean>(false);
 
   // WebXRサポートのチェック
   useEffect(() => {
@@ -54,6 +64,11 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) =>{
   useEffect(() => {
     const handleToggleConversation = (event: CustomEvent<{ show: boolean, objectName?: string }>) => {
       setShowConversation(event.detail.show);
+      
+      // 会話パネルが表示されるときは吹き出しを非表示に
+      if (event.detail.show) {
+        setShowSpeechBubble(false);
+      }
     };
     
     // カスタムイベントをリッスン
@@ -79,9 +94,23 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) =>{
     };
   }, [isUsingAR]);
 
+  // 会話パネルが閉じられたとき、吹き出しを再表示
+  useEffect(() => {
+    if (detectedObject && !showConversation && objectPosition) {
+      setShowSpeechBubble(true);
+    }
+  }, [showConversation, detectedObject, objectPosition]);
+
   // カメラのセットアップ
   const setupCamera = async (): Promise<void> => {
     try {
+      // すでにストリームが存在する場合は停止
+      if (videoRef.current && videoRef.current.srcObject instanceof MediaStream) {
+        const tracks = videoRef.current.srcObject.getTracks();
+        tracks.forEach((track) => track.stop());
+        videoRef.current.srcObject = null;
+      }
+
       const constraints = {
         video: {
           facingMode: "environment", // 背面カメラを優先
@@ -91,13 +120,29 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) =>{
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
         
-        // カメラが準備できたら識別ボタンを表示
+        // loadedmetadataイベントを使用して再生を開始
         videoRef.current.onloadedmetadata = () => {
-          setIdentifyButtonVisible(true);
+          // onloadedmetadataが発生した後に再生を試みる
+          const playPromise = videoRef.current?.play();
+          
+          // Promiseをハンドリングして、エラーを適切に処理
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                console.log('ビデオの再生が開始されました');
+                setIdentifyButtonVisible(true);
+              })
+              .catch(err => {
+                console.error('ビデオの再生に失敗しました:', err);
+                // 自動再生ポリシーの問題である可能性がある
+                // ユーザーに明示的な再生ボタンを表示するなどの対策が必要
+                setIdentifyButtonVisible(true); // エラーでも識別ボタンは表示
+              });
+          }
         };
       }
     } catch (error) {
@@ -154,12 +199,28 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) =>{
       
       if (result.animal && result.animal !== "unknown") {
         setDetectedObject(result.animal);
-        // 動物が検出されたら会話パネルを自動的に表示
-        setShowConversation(true);
+        
+        // バックエンドから物体の位置情報を取得した場合
+        if (result.boundingBox) {
+          const { x, y, width, height } = result.boundingBox;
+          setObjectPosition({ x, y, width, height });
+          setInitialPosition({ x, y, width, height });
+          
+          // 吹き出しを表示
+          setShowSpeechBubble(true);
+        } else {
+          // 位置情報がない場合はデフォルト位置を設定
+          // 画面中央に表示
+          setObjectPosition({ x: 0.4, y: 0.4, width: 0.2, height: 0.2 });
+          setInitialPosition({ x: 0.4, y: 0.4, width: 0.2, height: 0.2 });
+          setShowSpeechBubble(true);
+        }
       } else {
         // 動物が検出されなかった場合
         alert('オブジェクトを検出できませんでした。もう一度試してください。');
         setDetectedObject(null);
+        setShowSpeechBubble(false);
+        setObjectPosition(null);
       }
     } catch (error) {
       console.error('オブジェクト識別中にエラーが発生しました:', error);
@@ -175,11 +236,29 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) =>{
     // モード切替時に会話パネルを閉じる
     setShowConversation(false);
     setDetectedObject(null);
+    setShowSpeechBubble(false);
+    setObjectPosition(null);
+  };
+
+  // 追跡による位置情報の更新
+  const handlePositionUpdate = (newPosition: BoundingBox | null) => {
+    if (newPosition) {
+      console.log("位置情報更新:", newPosition);
+      setObjectPosition(newPosition);
+    } else if (initialPosition) {
+      // 追跡が失敗した場合は初期位置に戻す
+      console.log("追跡失敗、初期位置に戻ります:", initialPosition);
+      setObjectPosition(initialPosition);
+    }
+  };
+
+  // デバッグモードの切り替え
+  const toggleDebugMode = () => {
+    setShowDebugInfo(!showDebugInfo);
   };
 
   /**
    * 検出したオブジェクトの情報を取得する関数
-   * フロントエンドでは簡易的な情報のみを使用し、詳細はバックエンドで管理
    */
   const getObjectInfo = (): ObjectInfo => {
     if (!detectedObject) {
@@ -264,6 +343,16 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) =>{
   // 会話パネルを閉じる
   const closeConversation = (): void => {
     setShowConversation(false);
+    // 会話パネルを閉じたら吹き出しを再表示
+    if (detectedObject && objectPosition) {
+      setShowSpeechBubble(true);
+    }
+  };
+
+  // 吹き出しクリック処理
+  const handleSpeechBubbleClick = () => {
+    setShowConversation(true);
+    setShowSpeechBubble(false);
   };
 
   // ARボタンが利用可能かどうか
@@ -313,56 +402,66 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) =>{
     return null;
   };
 
-  // // WebXRモードの場合はThree.jsのCanvasを表示
-  // if (isUsingAR) {
-  //   console.log("ARモードが有効です");
-  //   return (
-  //     <div style={{ position: "relative", width: "100%", height: "100vh" }}>
-  //       <Canvas ref={canvasRef as React.RefObject<HTMLCanvasElement>}>
-  //         <XR>
-  //           <ambientLight intensity={0.5} />
-  //           <pointLight position={[10, 10, 10]} />
+  // デバッグボタンの表示
+  const renderDebugButton = (): React.ReactNode => {
+    return (
+      <div
+        style={{
+          position: "absolute",
+          top: 70,
+          right: 10,
+          zIndex: 1000,
+        }}
+      >
+        <button
+          onClick={toggleDebugMode}
+          style={{
+            backgroundColor: showDebugInfo ? "#FF6B6B" : "#4682B4",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            padding: "5px 10px",
+            fontSize: "12px",
+          }}
+        >
+          {showDebugInfo ? "デバッグ非表示" : "デバッグ表示"}
+        </button>
+      </div>
+    );
+  };
 
-  //           {/* AR空間内に吹き出しを表示 */}
-  //           {detectedObject && (
-  //             <SpeechBubble
-  //               position={[0, 0, -1]} // ユーザーの1m前に表示
-  //               message={getObjectInfo().description}
-  //               animalName={getObjectInfo().name}
-  //               color={getObjectInfo().color}
-  //               isInteractive={true} // タップで会話パネルを表示可能に
-  //               clientId={clientId}
-  //             />
-  //           )}
-  //         </XR>
-  //       </Canvas>
+  // デバッグ情報の表示
+  const renderDebugInfo = (): React.ReactNode => {
+    if (!showDebugInfo) return null;
 
-  //       {/* AR空間内でも会話パネルを表示できるように */}
-  //       {showConversation && detectedObject && (
-  //         <ConversationPanel
-  //           animalType={detectedObject}
-  //           animalName={getObjectInfo().name}
-  //           isVisible={showConversation}
-  //           onClose={closeConversation}
-  //           clientId={clientId} // クライアントIDを渡す
-  //         />
-  //       )}
-
-  //       <div
-  //         style={{
-  //           position: "absolute",
-  //           bottom: 10,
-  //           width: "100%",
-  //           textAlign: "center",
-  //         }}
-  //       >
-  //         <button onClick={toggleARMode} style={{ marginLeft: 10 }}>
-  //           カメラモードに切り替え
-  //         </button>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+    return (
+      <div
+        style={{
+          position: "absolute",
+          top: 110,
+          left: 10,
+          backgroundColor: "rgba(0, 0, 0, 0.7)",
+          color: "white",
+          padding: "10px",
+          borderRadius: "5px",
+          fontSize: "12px",
+          zIndex: 1000,
+          maxWidth: "300px",
+        }}
+      >
+        <h3 style={{ margin: "0 0 5px 0" }}>デバッグ情報</h3>
+        <p>検出対象: {detectedObject || "なし"}</p>
+        <p>追跡状態: {isTracking ? "追跡中" : "停止中"}</p>
+        <p>位置情報: {objectPosition ? JSON.stringify({
+          x: Math.round(objectPosition.x * 100) / 100,
+          y: Math.round(objectPosition.y * 100) / 100,
+          w: Math.round(objectPosition.width * 100) / 100,
+          h: Math.round(objectPosition.height * 100) / 100,
+        }) : "なし"}</p>
+        <p>ビデオサイズ: {videoRef.current ? `${videoRef.current.videoWidth}x${videoRef.current.videoHeight}` : "不明"}</p>
+      </div>
+    );
+  };
 
   // 通常のカメラモード
   return (
@@ -380,8 +479,29 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) =>{
         muted
       />
 
-      {/* 検出結果と情報を表示（検出された場合のみ） */}
+      {/* オブジェクト追跡コンポーネント */}
       {detectedObject && !showConversation && (
+        <ObjectTracking
+          videoRef={videoRef}
+          detectedAnimal={detectedObject}
+          onPositionUpdate={handlePositionUpdate}
+        />
+      )}
+
+      {/* 動的な吹き出し */}
+      {showSpeechBubble && detectedObject && objectPosition && (
+        <AnimatedSpeechBubble
+          message={getObjectInfo().description}
+          animalName={getObjectInfo().name}
+          color={getObjectInfo().color}
+          isVisible={showSpeechBubble && !showConversation}
+          position={objectPosition}
+          onClick={handleSpeechBubbleClick}
+        />
+      )}
+
+      {/* 検出結果と情報を表示（検出された場合のみ、吹き出しが表示されていない場合） */}
+      {detectedObject && !showConversation && !showSpeechBubble && (
         <div className="animal-info-overlay">
           <h2>{getObjectInfo().name}</h2>
           <p>{getObjectInfo().description}</p>
@@ -396,6 +516,8 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) =>{
 
       {renderIdentifyButton()}
       {renderARButton()}
+      {renderDebugButton()}
+      {renderDebugInfo()}
 
       {/* 会話パネル */}
       {showConversation && detectedObject && (

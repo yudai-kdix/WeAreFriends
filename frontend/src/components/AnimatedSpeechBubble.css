@@ -1,0 +1,111 @@
+.animal-speech-bubble {
+  position: absolute;
+  background-color: white;
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  max-width: 300px;
+  min-width: 200px;
+  z-index: 800;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  user-select: none;
+  transform-origin: center bottom;
+  animation: bubbleAppear 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+@keyframes bubbleAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.bubble-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.bubble-content {
+  font-size: 14px;
+  line-height: 1.4;
+  color: #333;
+  margin-bottom: 10px;
+  min-height: 40px;
+}
+
+.bubble-tail {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 10px;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.bubble-hint {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+/* アニメーション効果 */
+.bubble-bounce {
+  animation: bubbleBounce 2s infinite;
+}
+
+@keyframes bubbleBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* 文字表示アニメーション */
+.typing-animation {
+  display: inline-block;
+  margin-left: 4px;
+}
+
+.typing-animation::after {
+  content: '▋';
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 480px) {
+  .animal-speech-bubble {
+    max-width: 250px;
+    min-width: 150px;
+    padding: 10px 12px;
+  }
+  
+  .bubble-header {
+    font-size: 14px;
+  }
+  
+  .bubble-content {
+    font-size: 12px;
+  }
+}
