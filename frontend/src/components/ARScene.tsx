@@ -1,10 +1,14 @@
+// ARScene.tsx（完成版）
+
 import React, { useEffect, useRef, useState, type FC } from "react";
 import ConversationPanel from "./ConversationPanel";
 import config from '../config';
 import objectNameMapping from "../data/objectNameMapping";
 import { type IdentifyAnimalResponse } from "../types/index";
-import ObjectTracking from "./ObjectTracking";
+import ObjectTracking, { isTracking } from "./ObjectTracking";
 import AnimatedSpeechBubble from "./AnimatedSpeechBubble";
+import ModelLoader from "./ModelLoader";
+import { useModel } from "../contexts/ModelContext";
 
 // ARSceneコンポーネントの引数にclientIdを追加
 interface ARSceneProps {
@@ -35,7 +39,15 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
   const [isXRSupported, setIsXRSupported] = useState<boolean>(false);
   const [isUsingAR, setIsUsingAR] = useState<boolean>(false);
   const [showConversation, setShowConversation] = useState<boolean>(false);
+  
+  // モデルローダー関連の状態
+  const [isModelLoaded, setIsModelLoaded] = useState<boolean>(false);
+  const [modelError, setModelError] = useState<string | null>(null);
   const [identifyButtonVisible, setIdentifyButtonVisible] = useState<boolean>(false);
+
+  // ModelContextからモデル状態を取得
+  const { model, isLoading: isModelLoading, error: modelContextError,  loadModel } = useModel();
+  
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [objectPosition, setObjectPosition] = useState<BoundingBox | null>(null);
   const [initialPosition, setInitialPosition] = useState<BoundingBox | null>(null);
@@ -60,46 +72,43 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
     }
   }, []);
 
-  // 会話パネルの表示/非表示の制御のためのイベントリスナー
+  // useEffectでモデルの状態を監視
   useEffect(() => {
-    const handleToggleConversation = (event: CustomEvent<{ show: boolean, objectName?: string }>) => {
-      setShowConversation(event.detail.show);
-      
-      // 会話パネルが表示されるときは吹き出しを非表示に
-      if (event.detail.show) {
-        setShowSpeechBubble(false);
-      }
-    };
+    // モデルがロードされたとき
+    if (model) {
+      setIsModelLoaded(true);
+      setIdentifyButtonVisible(true);
+    } else {
+      setIsModelLoaded(false);
+    }
     
-    // カスタムイベントをリッスン
-    window.addEventListener('toggleConversation', handleToggleConversation as EventListener);
-    
-    return () => {
-      window.removeEventListener('toggleConversation', handleToggleConversation as EventListener);
-    };
-  }, []);
+    // モデルのエラー状態
+    if (modelContextError) {
+      setModelError(modelContextError.message);
+    }
+  }, [model, modelContextError]);
 
-  // カメラストリームのセットアップ
+  // カメラ設定後にモデルロードを開始
   useEffect(() => {
     if (!isUsingAR) {
-      setupCamera();
+      setupCamera().then(() => {
+        // カメラ設定後にモデルのロードを開始
+        loadModel();
+      });
     }
+  }, [isUsingAR, loadModel]);
 
-    return () => {
-      // クリーンアップ：カメラストリームの停止
-      if (videoRef.current && videoRef.current.srcObject instanceof MediaStream) {
-        const tracks = videoRef.current.srcObject.getTracks();
-        tracks.forEach((track) => track.stop());
-      }
-    };
-  }, [isUsingAR]);
+  // モデルロード完了ハンドラー
+  const handleModelLoadComplete = () => {
+    console.log('モデルのロードが完了しました');
+    setIdentifyButtonVisible(true);
+  };
 
-  // 会話パネルが閉じられたとき、吹き出しを再表示
-  useEffect(() => {
-    if (detectedObject && !showConversation && objectPosition) {
-      setShowSpeechBubble(true);
-    }
-  }, [showConversation, detectedObject, objectPosition]);
+  // モデルロードエラーハンドラー
+  const handleModelLoadError = (error: Error) => {
+    console.error('モデルのロード中にエラーが発生しました:', error);
+    setModelError(error.message);
+  };
 
   // カメラのセットアップ
   const setupCamera = async (): Promise<void> => {
@@ -139,7 +148,6 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
               .catch(err => {
                 console.error('ビデオの再生に失敗しました:', err);
                 // 自動再生ポリシーの問題である可能性がある
-                // ユーザーに明示的な再生ボタンを表示するなどの対策が必要
                 setIdentifyButtonVisible(true); // エラーでも識別ボタンは表示
               });
           }
@@ -152,7 +160,7 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
 
   // カメラ映像をキャプチャして画像として送信
   const captureAndIdentifyAnimal = async (): Promise<void> => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || !isModelLoaded) return;
     
     try {
       setIsLoading(true);
@@ -209,11 +217,13 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
           // 吹き出しを表示
           setShowSpeechBubble(true);
         } else {
-          // 位置情報がない場合はデフォルト位置を設定
-          // 画面中央に表示
-          setObjectPosition({ x: 0.4, y: 0.4, width: 0.2, height: 0.2 });
-          setInitialPosition({ x: 0.4, y: 0.4, width: 0.2, height: 0.2 });
+          // 位置情報がない場合はデフォルト位置を設定（画面中央）
+          const defaultPosition = { x: 0.4, y: 0.4, width: 0.2, height: 0.2 };
+          setObjectPosition(defaultPosition);
+          setInitialPosition(defaultPosition);
           setShowSpeechBubble(true);
+          
+          console.log('バックエンドから位置情報が返されませんでした。デフォルト位置を使用します。');
         }
       } else {
         // 動物が検出されなかった場合
@@ -230,25 +240,21 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
     }
   };
 
-  // WebXRモードとカメラモードの切り替え
-  const toggleARMode = (): void => {
-    setIsUsingAR(!isUsingAR);
-    // モード切替時に会話パネルを閉じる
-    setShowConversation(false);
-    setDetectedObject(null);
-    setShowSpeechBubble(false);
-    setObjectPosition(null);
-  };
-
   // 追跡による位置情報の更新
   const handlePositionUpdate = (newPosition: BoundingBox | null) => {
     if (newPosition) {
-      console.log("位置情報更新:", newPosition);
+      // デバッグ表示がオンの場合のみログを出力
+      if (showDebugInfo) {
+        console.log("位置情報更新:", newPosition);
+      }
       setObjectPosition(newPosition);
     } else if (initialPosition) {
-      // 追跡が失敗した場合は初期位置に戻す
-      console.log("追跡失敗、初期位置に戻ります:", initialPosition);
-      setObjectPosition(initialPosition);
+      // 追跡が失敗した場合は初期位置を維持
+      if (showDebugInfo) {
+        console.log("追跡失敗、初期位置を維持します:", initialPosition);
+      }
+      // オプション：完全に追跡が失敗した場合は初期位置に戻す
+      // setObjectPosition(initialPosition);
     }
   };
 
@@ -376,9 +382,22 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
     return null;
   };
 
+  // WebXRモードとカメラモードの切り替え
+  const toggleARMode = (): void => {
+    setIsUsingAR(!isUsingAR);
+    // モード切替時に会話パネルを閉じる
+    setShowConversation(false);
+    setDetectedObject(null);
+    setShowSpeechBubble(false);
+    setObjectPosition(null);
+  };
+
   // 識別ボタンの表示
   const renderIdentifyButton = (): React.ReactNode => {
     if (identifyButtonVisible && !isUsingAR && !showConversation) {
+      // モデルロード中またはAPIリクエスト中の場合は無効化されたボタンを表示
+      const isDisabled = isLoading || isModelLoading || !isModelLoaded;
+      
       return (
         <div
           style={{
@@ -391,10 +410,13 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
         >
           <button
             onClick={captureAndIdentifyAnimal}
-            className="identify-button"
-            disabled={isLoading}
+            className={`identify-button ${isDisabled ? 'disabled' : ''}`}
+            disabled={isDisabled}
           >
-            {isLoading ? "識別中..." : "オブジェクトを識別"}
+            {isLoading ? "識別中..." : 
+             isModelLoading ? "モデル準備中..." : 
+             !isModelLoaded ? "モデル未ロード" : 
+             "オブジェクトを識別"}
           </button>
         </div>
       );
@@ -452,6 +474,7 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
         <h3 style={{ margin: "0 0 5px 0" }}>デバッグ情報</h3>
         <p>検出対象: {detectedObject || "なし"}</p>
         <p>追跡状態: {isTracking ? "追跡中" : "停止中"}</p>
+        <p>モデル状態: {isModelLoaded ? "ロード済み" : isModelLoading ? "ロード中" : "未ロード"}</p>
         <p>位置情報: {objectPosition ? JSON.stringify({
           x: Math.round(objectPosition.x * 100) / 100,
           y: Math.round(objectPosition.y * 100) / 100,
@@ -479,12 +502,30 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
         muted
       />
 
-      {/* オブジェクト追跡コンポーネント */}
-      {detectedObject && !showConversation && (
+      {/* モデルローダー - カメラが準備できてモデルがまだロードされていないときに表示 */}
+      {isModelLoading && !isModelLoaded && !modelError && (
+        <ModelLoader 
+          onLoadComplete={handleModelLoadComplete}
+          onError={handleModelLoadError}
+        />
+      )}
+      
+      {/* モデルロードエラー表示 */}
+      {modelError && (
+        <div className="error-overlay">
+          <h3>モデルロードエラー</h3>
+          <p>{modelError}</p>
+          <button onClick={() => window.location.reload()}>再試行</button>
+        </div>
+      )}
+
+      {/* オブジェクト追跡コンポーネント - モデルがロードされ、物体が検出された場合に表示 */}
+      {detectedObject && !showConversation && isModelLoaded && (
         <ObjectTracking
           videoRef={videoRef}
           detectedAnimal={detectedObject}
           onPositionUpdate={handlePositionUpdate}
+          showDebugInfo={showDebugInfo}
         />
       )}
 
