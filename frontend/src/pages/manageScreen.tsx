@@ -12,6 +12,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import axios from "axios";
 
+import config from "../config";
 // 識別項目の型定義
 interface IdentificationItem {
   name: string;
@@ -123,7 +124,7 @@ const ManageScreen: React.FC = () => {
       });
 
       // APIエンドポイント (後で設定)
-      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+      const API_URL = config.apiBaseUrl || "http://localhost:8000";
 
       // データ送信
       const response = await axios.post(`${API_URL}/extend_prompt`, formData, {
