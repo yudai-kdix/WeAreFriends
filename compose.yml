@@ -10,6 +10,17 @@ services:
     env_file:
       - ./backend/.env
 
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    command: http backend:8000
+    ports:
+      - "4040:4040"  # ngrokのWebインターフェース（オプション）
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}  # .envファイルなどで定義
+    depends_on:
+      - backend
+
   frontend:
     build: ./frontend
     ports:
@@ -22,6 +33,3 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
     command: npm run dev -- --host
-
-
-
