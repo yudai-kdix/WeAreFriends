@@ -4,10 +4,11 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 import "./styles.css";
 import ARScene from "./components/ARScene";
 import ManageScreen from "./pages/manageScreen";
+import HomePage from "./pages/HomePage";
 import config from "./config";
 
-// メインページのコンポーネント化
-const MainPage: FC<{ clientId: string; websocketStatus: string }> = ({
+// カメラページのコンポーネント化
+const CameraPage: FC<{ clientId: string; websocketStatus: string }> = ({
   clientId,
   websocketStatus,
 }) => {
@@ -16,6 +17,9 @@ const MainPage: FC<{ clientId: string; websocketStatus: string }> = ({
       <header className="app-header">
         <h1>動物園AR体験</h1>
         <nav className="navigation">
+          <Link to="/" className="nav-link">
+            ホーム
+          </Link>
           <Link to="/manage" className="nav-link">
             識別対象管理
           </Link>
@@ -55,6 +59,9 @@ const Layout: FC<{ children: React.ReactNode }> = ({ children }) => {
       <nav className="global-nav">
         <Link to="/" className="nav-link">
           ホーム
+        </Link>
+        <Link to="/camera" className="nav-link">
+          カメラ
         </Link>
         <Link to="/manage" className="nav-link">
           識別対象管理
@@ -179,7 +186,7 @@ const App: FC = () => {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <p>動物園ARアプリを準備中...</p>
+        <p>アプリケーションを準備中...</p>
         <p className="loading-subtitle">カメラとサーバー接続を確認しています</p>
       </div>
     );
@@ -200,12 +207,18 @@ const App: FC = () => {
   return (
     <Router>
       <Routes>
+        {/* ホームページをルートに設定 */}
+        <Route path="/" element={<HomePage />} />
+
+        {/* カメラページを/cameraに移動 */}
         <Route
-          path="/"
+          path="/camera"
           element={
-            <MainPage clientId={clientId} websocketStatus={websocketStatus} />
+            <CameraPage clientId={clientId} websocketStatus={websocketStatus} />
           }
         />
+
+        {/* 管理ページ */}
         <Route
           path="/manage"
           element={
