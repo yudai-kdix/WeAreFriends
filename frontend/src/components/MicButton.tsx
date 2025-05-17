@@ -4,6 +4,7 @@ import React from 'react';
 import { Mic, Volume2 } from 'lucide-react';
 import { useConversation } from '../contexts/ConversationContext';
 import './MicButton.css';
+import speechService from '../services/speechService';
 
 interface MicButtonProps {
   className?: string;
@@ -13,6 +14,20 @@ const MicButton: React.FC<MicButtonProps> = ({
   className = '',
 }) => {
   const { isListening, isSpeaking, isConnected, toggleListening } = useConversation();
+
+  // トグルボタンのクリックハンドラーにデバッグを追加
+  const handleToggleClick = () => {
+    console.log('マイクボタンクリック前のリスナー状態:');
+    speechService.debugLogListeners();
+    
+    toggleListening();
+    
+    // 非同期のためタイムアウトで少し待つ
+    setTimeout(() => {
+      console.log('マイクボタンクリック後のリスナー状態:');
+      speechService.debugLogListeners();
+    }, 100);
+  };
   
   // ボタンのクラス名を構築
   let buttonClassName = 'mic-button';
@@ -32,7 +47,7 @@ const MicButton: React.FC<MicButtonProps> = ({
   return (
     <button
       className={buttonClassName}
-      onClick={toggleListening}
+      onClick={handleToggleClick}
       disabled={isSpeaking || !isConnected}
       aria-label={isListening ? "音声認識を停止" : "話しかける"}
     >

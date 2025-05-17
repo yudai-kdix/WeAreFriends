@@ -21,6 +21,9 @@ interface ConversationContextType {
   stopListening: () => void;
   toggleListening: () => void;
   sendMessage: (text: string) => void;
+  // 追加するメソッドと状態
+  animalType: string | null;
+  animalName: string | null;
   setAnimalInfo: (animalType: string, animalName: string) => void;
 }
 
@@ -31,6 +34,8 @@ const ConversationContext = createContext<ConversationContextType>({
   isSpeaking: false,
   isConnected: false,
   connectionStatus: 'uninstantiated',
+  animalName: null,
+  animalType: null,
   startListening: () => {},
   stopListening: () => {},
   toggleListening: () => {},
@@ -50,8 +55,9 @@ interface ConversationProviderProps {
 export const ConversationProvider: React.FC<ConversationProviderProps> = ({
   children,
   clientId,
-  initialAnimalType,
-  initialAnimalName,
+  initialAnimalType = null,
+  initialAnimalName = null,
+
 }) => {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [isListening, setIsListening] = useState<boolean>(false);
@@ -224,7 +230,6 @@ export const ConversationProvider: React.FC<ConversationProviderProps> = ({
     const handleEnd = () => {
       setIsListening(false);
     };
-
     // 登録
     speechService.onSpeech(handleSpeech);
     speechService.onStart(handleStart);
@@ -294,6 +299,9 @@ export const ConversationProvider: React.FC<ConversationProviderProps> = ({
     stopListening,
     toggleListening,
     sendMessage,
+    // 追加するプロパティとメソッド
+    animalType,
+    animalName,
     setAnimalInfo,
   };
 

@@ -1,19 +1,18 @@
 /* src/components/IdentifyButton.css */
-
 .identify-button {
   position: fixed;
   width: 3.5rem;
   height: 3.5rem;
   padding: 0;
-  border-radius: 50%;
+  border-radius: 9999px;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
   cursor: pointer;
-  z-index: 900;
+  z-index: 950;
 }
 
 /* 位置: 中央 */
@@ -37,7 +36,8 @@
 
 .identify-button--primary:hover {
   background-color: #059669; /* green-600 */
-  transform: translateX(-50%) scale(1.05);
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 /* スタイル: セカンダリ */
@@ -48,7 +48,8 @@
 
 .identify-button--secondary:hover {
   background-color: #374151; /* gray-700 */
-  transform: scale(1.05);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 /* 状態: 無効 */
@@ -65,7 +66,7 @@
 
 /* 状態: ローディング */
 .identify-button--loading {
-  animation: buttonPulse 2s infinite;
+  animation: buttonPulse 1.5s infinite;
 }
 
 .identify-button__icon {
@@ -75,22 +76,25 @@
 
 /* 中央に配置されたボタンのホバー状態 */
 .identify-button--centered:hover:not(.identify-button--disabled) {
-  transform: translateX(-50%) scale(1.05);
+  transform: translateX(-50%) translateY(-2px);
 }
 
 /* コーナーに配置されたボタンのホバー状態 */
 .identify-button--corner:hover:not(.identify-button--disabled) {
-  transform: scale(1.05);
+  transform: translateY(-2px);
 }
 
 @keyframes buttonPulse {
   0% {
     opacity: 1;
+    transform: scale(1);
   }
   50% {
-    opacity: 0.7;
+    opacity: 0.8;
+    transform: scale(1.05);
   }
   100% {
     opacity: 1;
+    transform: scale(1);
   }
 }

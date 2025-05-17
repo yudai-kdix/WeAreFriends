@@ -7,7 +7,7 @@ import ObjectTracking from "./ObjectTracking";
 import AnimatedSpeechBubble from "./AnimatedSpeechBubble";
 import ModelLoader from "./ModelLoader";
 import { useModel } from "../contexts/ModelContext";
-import { ConversationProvider } from '../contexts/ConversationContext';
+import { ConversationProvider, useConversation } from '../contexts/ConversationContext';
 import { getObjectInfo } from '../utils/objectInfoUtils';
 import IdentifyButton from "./IdentifyButton";
 import MicButton from "./MicButton";
@@ -42,6 +42,8 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
 
   // ModelContextからモデル状態を取得
   const { model, isLoading: isModelLoading, error: modelContextError,  loadModel } = useModel();
+  // ConversationContextから動物情報更新メソッドを取得
+  const { setAnimalInfo } = useConversation();
   
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [objectPosition, setObjectPosition] = useState<BoundingBox | null>(null);
@@ -202,6 +204,10 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
       
       if (result.animal && result.animal !== "unknown") {
         setDetectedObject(result.animal);
+
+        // ConversationContextの動物情報を更新
+        const animalInfo = getObjectInfo(result.animal);
+        setAnimalInfo(result.animal, animalInfo.name);
         
         // バックエンドから物体の位置情報を取得した場合
         if (result.boundingBox) {
@@ -341,11 +347,6 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
 
       {/* 会話機能付き吹き出し - ConversationProviderでラップ */}
       {showSpeechBubble && detectedObject && objectPosition && (
-        <ConversationProvider 
-          clientId={clientId}
-          initialAnimalType={detectedObject}
-          initialAnimalName={objectInfo.name}
-        >
           <AnimatedSpeechBubble
             animalName={objectInfo.name}
             color={objectInfo.color}
@@ -353,7 +354,6 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
             position={objectPosition}
             initialMessage={objectInfo.description}
           />
-        </ConversationProvider>
       )}
 
       {/* 検出結果と情報を表示（検出された場合のみ、吹き出しが表示されていない場合） */}
@@ -383,13 +383,7 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
 
       {/* マイクボタン */}
       {showMicButton && detectedObject && !isUsingAR && !showConversation && (
-        <ConversationProvider
-          clientId={clientId}
-          initialAnimalType={detectedObject}
-          initialAnimalName={getObjectInfo(detectedObject).name}
-        >
           <MicButton />
-        </ConversationProvider>
       )}
 
       {renderARButton()}

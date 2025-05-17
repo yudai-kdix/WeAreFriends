@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useConversation } from '../contexts/ConversationContext';
-import MicButton from './MicButton';
 import './AnimatedSpeechBubble.css';
 
 interface AnimatedSpeechBubbleProps {
@@ -25,7 +24,7 @@ const AnimatedSpeechBubble: React.FC<AnimatedSpeechBubbleProps> = ({
   position,
   initialMessage,
 }) => {
-  const { messages, isSpeaking } = useConversation();
+  const { messages } = useConversation();
   const [displayedMessage, setDisplayedMessage] = useState<string>('');
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const charIndexRef = useRef<number>(0);

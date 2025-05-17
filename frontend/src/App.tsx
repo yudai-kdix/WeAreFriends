@@ -3,6 +3,7 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import './styles.css';
 import ARScene from './components/ARScene';
 import config from './config';
+import { ConversationProvider } from './contexts/ConversationContext';
 
 const App: FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -123,9 +124,12 @@ const App: FC = () => {
   // メインアプリ
   return (
     <div className="app">
+      <ConversationProvider
+          clientId={clientId}
+        >
       <header className="app-header">
-        <h1>動物園AR体験</h1>
-        {websocketStatus === 'connected' && (
+        <h1>We Are Friends</h1>
+        {/* {websocketStatus === 'connected' && (
           <div className="connection-badge connected">サーバー接続中</div>
         )}
         {websocketStatus === 'disconnected' && (
@@ -133,7 +137,7 @@ const App: FC = () => {
         )}
         {websocketStatus === 'connecting' && (
           <div className="connection-badge connecting">接続中...</div>
-        )}
+        )} */}
       </header>
       
       <main className="app-content">
@@ -147,6 +151,7 @@ const App: FC = () => {
           <p className="connection-warning">サーバーに接続されていません。会話機能が利用できない場合があります。</p>
         )}
       </footer>
+      </ConversationProvider>
     </div>
   );
 };
