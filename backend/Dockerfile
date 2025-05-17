@@ -1,4 +1,6 @@
-FROM --platform=\${BUILDPLATFORM:-linux/amd64} python:3.10-slim
+# FROM --platform=\${BUILDPLATFORM:-linux/amd64} python:3.10-slim
+# pythonのバージョンを3.12に変えて
+FROM --platform=${BUILDPLATFORM:-linux/amd64} python:3.12-slim
 
 WORKDIR /app
 
@@ -15,8 +17,13 @@ COPY poetry.lock* ./
 # 依存関係のインストール
 RUN poetry install --no-interaction --no-ansi
 
-RUN apt -y update
-RUN apt -y install libopencv-dev
+COPY ./badproxy /etc/apt/apt.conf.d/99fixbadproxy
+
+RUN printf "deb http://ftp.jp.debian.org/debian bullseye main contrib non-free\n" \
+        > /etc/apt/sources.list && \
+    apt-get update
+
+RUN apt-get install -y libopencv-dev
 
 # アプリケーションコードをコピー
 COPY . .

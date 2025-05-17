@@ -1,0 +1,120 @@
+/* src/components/AnimatedSpeechBubble.css */
+.animal-speech-bubble {
+  position: absolute;
+  background-color: white;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 300px;
+  min-width: 200px;
+  z-index: 950;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  user-select: none;
+  transform-origin: center bottom;
+  animation: bubbleAppear 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  border: 1px solid rgba(229, 231, 235, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+@keyframes bubbleAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.bubble-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bubble-content {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: #374151;
+  margin-bottom: 0.75rem;
+  min-height: 3rem;
+}
+
+.bubble-tail {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 10px;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.bubble-hint {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-align: center;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+/* アニメーション効果 */
+.bubble-bounce {
+  animation: bubbleBounce 2s infinite;
+}
+
+@keyframes bubbleBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* 文字表示アニメーション */
+.typing-animation {
+  display: inline-block;
+  margin-left: 4px;
+}
+
+.typing-animation::after {
+  content: '▋';
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 480px) {
+  .animal-speech-bubble {
+    max-width: 250px;
+    min-width: 150px;
+    padding: 1rem;
+  }
+  
+  .bubble-header {
+    font-size: 0.875rem;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .bubble-content {
+    font-size: 0.8125rem;
+  }
+}

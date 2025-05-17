@@ -1,0 +1,100 @@
+/* src/components/IdentifyButton.css */
+.identify-button {
+  position: fixed;
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0;
+  border-radius: 9999px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  z-index: 950;
+}
+
+/* 位置: 中央 */
+.identify-button--centered {
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 6rem;
+}
+
+/* 位置: 右下隅 */
+.identify-button--corner {
+  right: 1rem;
+  bottom: 6rem;
+}
+
+/* スタイル: プライマリ */
+.identify-button--primary {
+  background-color: #10b981; /* green-500 */
+  color: white;
+}
+
+.identify-button--primary:hover {
+  background-color: #059669; /* green-600 */
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* スタイル: セカンダリ */
+.identify-button--secondary {
+  background-color: #4b5563; /* gray-600 */
+  color: white;
+}
+
+.identify-button--secondary:hover {
+  background-color: #374151; /* gray-700 */
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* 状態: 無効 */
+.identify-button--disabled {
+  background-color: #9ca3af; /* gray-400 */
+  color: white;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.identify-button--disabled:hover {
+  transform: none;
+}
+
+/* 状態: ローディング */
+.identify-button--loading {
+  animation: buttonPulse 1.5s infinite;
+}
+
+.identify-button__icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* 中央に配置されたボタンのホバー状態 */
+.identify-button--centered:hover:not(.identify-button--disabled) {
+  transform: translateX(-50%) translateY(-2px);
+}
+
+/* コーナーに配置されたボタンのホバー状態 */
+.identify-button--corner:hover:not(.identify-button--disabled) {
+  transform: translateY(-2px);
+}
+
+@keyframes buttonPulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
