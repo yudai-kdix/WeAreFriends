@@ -10,6 +10,17 @@ services:
     env_file:
       - ./backend/.env
 
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    command: http backend:8000
+    ports:
+      - "4040:4040"  # ngrokのWebインターフェース（オプション）
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}  # .envファイルなどで定義
+    depends_on:
+      - backend
+
   frontend:
     build: ./frontend
     ports:
@@ -22,22 +33,3 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
     command: npm run dev -- --host
-
-  db:
-    image: postgres:15
-    container_name: we_are_friends_db
-    restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      POSTGRES_DB: ${POSTGRES_DB:-wearefriends}
-    ports:
-      - '5432:5432'
-    volumes:
-      - db_data:/var/lib/postgresql/data
-
-volumes:
-  db_data:
-
-
-
