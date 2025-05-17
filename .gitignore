@@ -47,3 +47,11 @@ yarn-error.log
 # OS
 .DS_Store
 Thumbs.db
+
+# .envファイル
+.env
+.env.local
+.env.development
+.env.development.local
+.env.production
+.env.production.local
