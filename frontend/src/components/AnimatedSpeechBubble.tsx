@@ -1,8 +1,11 @@
+// src/components/AnimatedSpeechBubble.tsx（修正版）
+
 import React, { useState, useEffect, useRef } from 'react';
+import { useConversation } from '../contexts/ConversationContext';
+import MicButton from './MicButton';
 import './AnimatedSpeechBubble.css';
 
 interface AnimatedSpeechBubbleProps {
-  message: string;
   animalName: string;
   color?: string;
   isVisible: boolean;
@@ -12,27 +15,32 @@ interface AnimatedSpeechBubbleProps {
     width: number;
     height: number;
   } | null;
-  onClick?: () => void;
+  initialMessage?: string;
 }
 
 const AnimatedSpeechBubble: React.FC<AnimatedSpeechBubbleProps> = ({
-  message,
   animalName,
   color = '#ffffff',
   isVisible,
   position,
-  onClick
+  initialMessage,
 }) => {
+  const { messages, isSpeaking } = useConversation();
   const [displayedMessage, setDisplayedMessage] = useState<string>('');
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const charIndexRef = useRef<number>(0);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number | null>(null);
   
+  // 最新のメッセージを取得（初期メッセージまたは会話の最新メッセージ）
+  const latestMessage = messages.length > 0 
+    ? messages[messages.length - 1].content 
+    : initialMessage || `こんにちは！${animalName}です。何か質問してください。`;
+  
   // メッセージが変更されたときにアニメーションを開始
   useEffect(() => {
-    if (message && isVisible) {
-      startAnimation();
+    if (latestMessage && isVisible) {
+      startAnimation(latestMessage);
     }
     
     return () => {
@@ -41,7 +49,7 @@ const AnimatedSpeechBubble: React.FC<AnimatedSpeechBubbleProps> = ({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [message, isVisible]);
+  }, [latestMessage, isVisible]);
   
   // 位置が更新されたときの処理
   useEffect(() => {
@@ -110,15 +118,15 @@ const AnimatedSpeechBubble: React.FC<AnimatedSpeechBubbleProps> = ({
   };
   
   // メッセージアニメーションの開始
-  const startAnimation = () => {
+  const startAnimation = (textToAnimate: string) => {
     setIsAnimating(true);
     charIndexRef.current = 0;
     setDisplayedMessage('');
     
     // 文字を1つずつ表示するアニメーション
     const animateText = () => {
-      if (charIndexRef.current < message.length) {
-        setDisplayedMessage(prev => prev + message.charAt(charIndexRef.current));
+      if (charIndexRef.current < textToAnimate.length) {
+        setDisplayedMessage(prev => prev + textToAnimate.charAt(charIndexRef.current));
         charIndexRef.current += 1;
         setTimeout(animateText, 50); // 50msごとに1文字表示
       } else {
@@ -139,7 +147,6 @@ const AnimatedSpeechBubble: React.FC<AnimatedSpeechBubbleProps> = ({
       style={{ 
         backgroundColor: color,
       }}
-      onClick={onClick}
     >
       <div className="bubble-header">
         {animalName}
@@ -152,12 +159,19 @@ const AnimatedSpeechBubble: React.FC<AnimatedSpeechBubbleProps> = ({
             <span className="typing-animation"></span>
           </>
         ) : (
-          message
+          latestMessage
         )}
       </div>
       
-      <div className="bubble-hint">
-        タップして会話する
+      {/* マイクボタンコンテナを追加 */}
+      <div className="mic-button-container">
+        <MicButton
+          buttonText={{
+            default: "話しかける",
+            listening: "聞いています...",
+            speaking: "返答中..."
+          }}
+        />
       </div>
       
       <div 

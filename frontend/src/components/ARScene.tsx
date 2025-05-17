@@ -9,6 +9,7 @@ import ObjectTracking, { isTracking } from "./ObjectTracking";
 import AnimatedSpeechBubble from "./AnimatedSpeechBubble";
 import ModelLoader from "./ModelLoader";
 import { useModel } from "../contexts/ModelContext";
+import { ConversationProvider } from '../contexts/ConversationContext';
 
 // ARSceneコンポーネントの引数にclientIdを追加
 interface ARSceneProps {
@@ -529,16 +530,21 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
         />
       )}
 
-      {/* 動的な吹き出し */}
+      {/* 会話機能付き吹き出し - ConversationProviderでラップ */}
       {showSpeechBubble && detectedObject && objectPosition && (
-        <AnimatedSpeechBubble
-          message={getObjectInfo().description}
-          animalName={getObjectInfo().name}
-          color={getObjectInfo().color}
-          isVisible={showSpeechBubble && !showConversation}
-          position={objectPosition}
-          onClick={handleSpeechBubbleClick}
-        />
+        <ConversationProvider 
+          clientId={clientId}
+          initialAnimalType={detectedObject}
+          initialAnimalName={getObjectInfo().name}
+        >
+          <AnimatedSpeechBubble
+            animalName={getObjectInfo().name}
+            color={getObjectInfo().color}
+            isVisible={showSpeechBubble}
+            position={objectPosition}
+            initialMessage={getObjectInfo().description}
+          />
+        </ConversationProvider>
       )}
 
       {/* 検出結果と情報を表示（検出された場合のみ、吹き出しが表示されていない場合） */}

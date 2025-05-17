@@ -109,3 +109,21 @@
     font-size: 12px;
   }
 }
+
+/* src/components/AnimatedSpeechBubble.css に追加 */
+
+.mic-button-container {
+  text-align: center;
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+/* 吹き出しのサイズ調整 */
+.animal-speech-bubble {
+  min-height: 140px;
+  max-width: 300px;
+}
+
+.bubble-content {
+  min-height: 60px;
+}
