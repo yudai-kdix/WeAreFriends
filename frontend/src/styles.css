@@ -27,13 +27,6 @@ body {
   height: 100%;    /* 追加：高さを100%に */
 }
 
-/* ------- 以下のデフォルトテンプレートスタイルは削除推奨 ------- */
-/* 
-.logo, .card, .read-the-docs, a:nth-of-type(2) .logo {
-  これらは不要なので削除
-}
-*/
-
 /* アプリ全体のコンテナ */
 .app {
   display: flex;
@@ -101,7 +94,7 @@ body {
 }
 
 /* ARボタンと識別ボタン共通スタイル */
-.ar-toggle-btn, .identify-button {
+.ar-toggle-btn {
   border: none;
   cursor: pointer;
   font-weight: 600;
@@ -125,69 +118,6 @@ body {
 .ar-toggle-btn:hover {
   background-color: #2a4a7c;
   transform: translateY(-2px);
-}
-
-/* 識別ボタン */
-.identify-button {
-  background-color: #4CAF50;
-  color: white;
-  border-radius: 50px;
-  padding: 12px 24px;
-  font-size: 16px;
-  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-}
-
-.identify-button:hover {
-  background-color: #388E3C;
-  transform: scale(1.05);
-}
-
-.identify-button:active {
-  transform: scale(0.98);
-}
-
-.identify-button:disabled {
-  background-color: #9E9E9E;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.identify-button::before {
-  content: "📸";
-  font-size: 18px;
-}
-
-/* 動物と会話するボタン */
-.speak-button {
-  background-color: #ff6b6b;
-  color: white;
-  border: none;
-  border-radius: 50px;
-  padding: 12px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  animation: pulse 2s infinite;
-}
-
-.speak-button:hover {
-  background-color: #ff5252;
-  transform: scale(1.05);
-}
-
-.speak-button:active {
-  transform: scale(0.98);
-}
-
-.speak-button::before {
-  content: "🎤";
-  font-size: 18px;
 }
 
 /* 動物情報のオーバーレイ */
@@ -327,7 +257,7 @@ body {
   width: 100%;
   font-size: 12px;
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
-  z-index: 800;
+  z-index: 900;
 }
 
 .app-footer p {
@@ -398,11 +328,6 @@ body {
   
   .app-header h1 {
     font-size: 16px;
-  }
-  
-  .identify-button, .speak-button {
-    padding: 10px 20px;
-    font-size: 14px;
   }
   
   .animal-info-overlay {

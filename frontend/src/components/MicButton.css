@@ -1,47 +1,84 @@
 /* src/components/MicButton.css */
 
 .mic-button {
-  background-color: #4a6fa5;
-  color: white;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 6rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0;
+  border-radius: 50%;
   border: none;
-  border-radius: 50px;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  z-index: 900;
 }
 
-.mic-button:hover {
-  background-color: #3a5a8c;
+.mic-button--default {
+  background-color: #3b82f6; /* blue-500 */
+  color: white;
 }
 
-.mic-button.listening {
-  background-color: #f44336;
-  animation: pulse 1.5s infinite;
+.mic-button--default:hover {
+  background-color: #2563eb; /* blue-600 */
 }
 
-.mic-button.speaking {
-  background-color: #4CAF50;
+.mic-button--listening {
+  background-color: #ef4444; /* red-500 */
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+.mic-button--listening:hover {
+  background-color: #dc2626; /* red-600 */
+}
+
+.mic-button--speaking {
+  background-color: #10b981; /* green-500 */
+  color: white;
+}
+
+.mic-button--speaking:hover {
+  background-color: #059669; /* green-600 */
 }
 
 .mic-button:disabled {
-  background-color: #b0bec5;
+  background-color: #9ca3af; /* gray-400 */
   cursor: not-allowed;
+  box-shadow: none;
+}
+
+.mic-button__icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.mic-button__icon--pulse {
+  animation: iconPulse 2s infinite;
 }
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
   }
 }

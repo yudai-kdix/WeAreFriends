@@ -1,43 +1,48 @@
 // src/components/MicButton.tsx
 
 import React from 'react';
+import { Mic, Volume2 } from 'lucide-react';
 import { useConversation } from '../contexts/ConversationContext';
 import './MicButton.css';
 
 interface MicButtonProps {
   className?: string;
-  buttonText?: {
-    default?: string;
-    listening?: string;
-    speaking?: string;
-  };
 }
 
 const MicButton: React.FC<MicButtonProps> = ({
   className = '',
-  buttonText = {
-    default: '🎤 話しかける',
-    listening: '🎤 聞いています...',
-    speaking: '🔊 返答中...'
-  }
 }) => {
   const { isListening, isSpeaking, isConnected, toggleListening } = useConversation();
   
-  // ボタンクラスの構築
-  const buttonClass = `mic-button ${isListening ? 'listening' : ''} ${isSpeaking ? 'speaking' : ''} ${className}`;
+  // ボタンのクラス名を構築
+  let buttonClassName = 'mic-button';
   
-  // ボタンテキストの選択
-  let text = buttonText.default;
-  if (isListening) text = buttonText.listening || '聞いています...';
-  if (isSpeaking) text = buttonText.speaking || '返答中...';
+  if (isListening) {
+    buttonClassName += ' mic-button--listening';
+  } else if (isSpeaking) {
+    buttonClassName += ' mic-button--speaking';
+  } else {
+    buttonClassName += ' mic-button--default';
+  }
+  
+  if (className) {
+    buttonClassName += ` ${className}`;
+  }
   
   return (
     <button
-      className={buttonClass}
+      className={buttonClassName}
       onClick={toggleListening}
       disabled={isSpeaking || !isConnected}
+      aria-label={isListening ? "音声認識を停止" : "話しかける"}
     >
-      {text}
+      {isListening ? (
+        <Mic className="mic-button__icon mic-button__icon--pulse" />
+      ) : isSpeaking ? (
+        <Volume2 className="mic-button__icon" />
+      ) : (
+        <Mic className="mic-button__icon" />
+      )}
     </button>
   );
 };

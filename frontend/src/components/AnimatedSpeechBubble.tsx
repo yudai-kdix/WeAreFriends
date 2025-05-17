@@ -163,17 +163,6 @@ const AnimatedSpeechBubble: React.FC<AnimatedSpeechBubbleProps> = ({
         )}
       </div>
       
-      {/* マイクボタンコンテナを追加 */}
-      <div className="mic-button-container">
-        <MicButton
-          buttonText={{
-            default: "話しかける",
-            listening: "聞いています...",
-            speaking: "返答中..."
-          }}
-        />
-      </div>
-      
       <div 
         className="bubble-tail" 
         style={{ backgroundColor: color }}
