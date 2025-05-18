@@ -1,9 +1,8 @@
 // ARScene.tsx
 
-import React, { useEffect, useRef, useState, type FC } from "react";
+import React, { useCallback, useEffect, useRef, useState, type FC } from "react";
 import config from '../config';
 import { type IdentifyAnimalResponse } from "../types/index";
-import ObjectTracking from "./ObjectTracking";
 import AnimatedSpeechBubble from "./AnimatedSpeechBubble";
 import ModelLoader from "./ModelLoader";
 import { useModel } from "../contexts/ModelContext";
@@ -56,6 +55,8 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
   const [trackingMode, setTrackingMode] = useState<TrackingMode>('local');
   const [isTrackingEnabled, setTrackingEnabled] = useState<boolean>(false);
   const [showTrackingDebug, setShowTrackingDebug] = useState<boolean>(false);
+
+  setShowTrackingDebug(false);
 
 
   // WebXRサポートのチェック
@@ -267,7 +268,7 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
   };
 
   // 追跡による位置情報の更新
-  const handlePositionUpdate = (newPosition: BoundingBox | null) => {
+  const handlePositionUpdate = useCallback((newPosition: BoundingBox | null) => {
     if (newPosition) {
       // デバッグ表示がオンの場合のみログを出力
       if (showDebugInfo) {
@@ -282,7 +283,7 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
       // オプション：完全に追跡が失敗した場合は初期位置に戻す
       // setObjectPosition(initialPosition);
     }
-  };
+  }, [initialPosition, showDebugInfo]);
 
   // ARボタンが利用可能かどうか
   const renderARButton = (): React.ReactNode => {

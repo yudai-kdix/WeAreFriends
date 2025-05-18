@@ -5,7 +5,7 @@ import React from 'react';
 import { Button, ButtonGroup, Tooltip, Badge } from '@mui/material';
 import DevicesIcon from '@mui/icons-material/Devices';
 import CloudIcon from '@mui/icons-material/Cloud';
-import { TrackingMode } from './TrackingController';
+import { type TrackingMode } from './TrackingController';
 
 // コンポーネントのプロパティ定義
 interface TrackingModeSelectorProps {

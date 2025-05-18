@@ -1,7 +1,7 @@
 // TrackingController.tsx
 // 追跡モードを制御するコントローラーコンポーネント
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ObjectTracking, { isTracking } from './ObjectTracking';
 import ServerObjectTracking, { isServerTracking } from './ServerObjectTracking';
 
@@ -47,20 +47,19 @@ const TrackingController: React.FC<TrackingControllerProps> = ({
     height: number;
   } | null>(null);
   
-  // 検出位置更新ハンドラ
-  const handlePositionUpdate = (position: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } | null) => {
-    if (position) {
-      setLastPosition(position);
-    }
-    
-    // 親コンポーネントに通知
-    onPositionUpdate(position || lastPosition);
-  };
+  const handlePositionUpdate = useCallback((position: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+} | null) => {
+  if (position) {
+    setLastPosition(position);
+  }
+  
+  // 親コンポーネントに通知
+  onPositionUpdate(position || lastPosition);
+}, [onPositionUpdate, lastPosition]); // 依存配列を明示的に指定
   
   return (
     <>
