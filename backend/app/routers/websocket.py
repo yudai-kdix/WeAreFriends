@@ -1,5 +1,6 @@
 # app/services/websocket.py
 
+import os
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import json
 import base64
@@ -87,7 +88,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             "width": bbox["width"] / 1000,
                             "height": bbox["height"] / 1000
                         }
-                    
+                    os.remove(image_path)
                     await manager.send_message(
                         client_id,
                         WebSocketMessage(
