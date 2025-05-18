@@ -56,8 +56,6 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
   const [isTrackingEnabled, setTrackingEnabled] = useState<boolean>(false);
   const [showTrackingDebug, setShowTrackingDebug] = useState<boolean>(false);
 
-  setShowTrackingDebug(false);
-
 
   // WebXRサポートのチェック
   useEffect(() => {
@@ -84,6 +82,7 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
       setIsModelLoaded(true);
       setIdentifyButtonVisible(true);
       setShowDebugInfo(false);
+      setShowTrackingDebug(false);
     } else {
       setIsModelLoaded(false);
     }
