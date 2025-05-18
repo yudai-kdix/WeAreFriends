@@ -22,7 +22,7 @@ def save_ws_image(image_base64: str, filename: str) -> str:
     return filepath
 
 class ImageProcessor:
-    def __init__(self, folder_path="received_images", model_path="models/best.pt", flg: int = 1):
+    def __init__(self, folder_path="received_images", model_path="models/best.pt", flg: int = 0):
         self.folder_path = folder_path
         os.makedirs(folder_path, exist_ok=True)
         # モデル選択フラグによる切り替え

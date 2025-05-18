@@ -1,18 +1,20 @@
 // TrackingController.tsx
 // 追跡モードを制御するコントローラーコンポーネント
 
-import React, { useState, useEffect, useCallback } from 'react';
-import ObjectTracking, { isTracking } from './ObjectTracking';
-import ServerObjectTracking, { isServerTracking } from './ServerObjectTracking';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import ObjectTracking, { isTracking } from "./ObjectTracking";
+import ServerObjectTracking, { isServerTracking } from "./ServerObjectTracking";
 
 // 追跡モードの型定義
-export type TrackingMode = 'local' | 'server';
+export type TrackingMode = "local" | "server";
 
 // コンポーネントのプロパティ定義
 interface TrackingControllerProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   detectedAnimal: string;
-  onPositionUpdate: (position: { x: number; y: number; width: number; height: number } | null) => void;
+  onPositionUpdate: (
+    position: { x: number; y: number; width: number; height: number } | null
+  ) => void;
   clientId: string;
   trackingMode: TrackingMode;
   isEnabled: boolean; // 追跡が有効かどうか
@@ -26,19 +28,21 @@ const TrackingController: React.FC<TrackingControllerProps> = ({
   clientId,
   trackingMode,
   isEnabled,
-  showDebugInfo = false
+  showDebugInfo = false,
 }) => {
   // 状態が変更されたときにログを出力（デバッグ用）
   useEffect(() => {
     if (showDebugInfo) {
-      console.log(`TrackingController: モード=${trackingMode}, 有効=${isEnabled}`);
+      console.log(
+        `TrackingController: モード=${trackingMode}, 有効=${isEnabled}`
+      );
     }
   }, [trackingMode, isEnabled, showDebugInfo]);
-  
+
   // 各モードが実際に有効かどうかの計算
-  const isLocalActive = isEnabled && trackingMode === 'local';
-  const isServerActive = isEnabled && trackingMode === 'server';
-  
+  const isLocalActive = isEnabled && trackingMode === "local";
+  const isServerActive = isEnabled && trackingMode === "server";
+
   // 検出結果のキャッシュ（一時的な通信切断時などのために）
   const [lastPosition, setLastPosition] = useState<{
     x: number;
@@ -46,21 +50,35 @@ const TrackingController: React.FC<TrackingControllerProps> = ({
     width: number;
     height: number;
   } | null>(null);
-  
-  const handlePositionUpdate = useCallback((position: {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-} | null) => {
-  if (position) {
-    setLastPosition(position);
-  }
-  
-  // 親コンポーネントに通知
-  onPositionUpdate(position || lastPosition);
-}, [onPositionUpdate, lastPosition]); // 依存配列を明示的に指定
-  
+
+  // 追加：refを使用して最新のlastPositionを保持
+  const lastPositionRef = useRef(lastPosition);
+
+  // lastPositionが変更されたらrefも更新
+  useEffect(() => {
+    lastPositionRef.current = lastPosition;
+  }, [lastPosition]);
+
+  // handlePositionUpdateを修正
+  const handlePositionUpdate = useCallback(
+    (
+      position: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      } | null
+    ) => {
+      if (position) {
+        setLastPosition(position);
+      }
+
+      // lastPositionの代わりにlastPositionRef.currentを使用
+      onPositionUpdate(position || lastPositionRef.current);
+    },
+    [onPositionUpdate]
+  );
+
   return (
     <>
       {/* ローカルCOCO-SSD追跡 - localモードで有効時のみレンダリング */}
@@ -72,7 +90,7 @@ const TrackingController: React.FC<TrackingControllerProps> = ({
           showDebugInfo={showDebugInfo}
         />
       )}
-      
+
       {/* サーバーベース追跡 - serverモードのときのみ有効 */}
       <ServerObjectTracking
         videoRef={videoRef}
@@ -82,31 +100,31 @@ const TrackingController: React.FC<TrackingControllerProps> = ({
         active={isServerActive}
         showDebugInfo={showDebugInfo}
       />
-      
+
       {/* デバッグ情報（オプション） */}
       {showDebugInfo && (
         <div
           style={{
-            position: 'absolute',
+            position: "absolute",
             bottom: 10,
             left: 10,
-            backgroundColor: 'rgba(0,0,0,0.7)',
-            color: 'white',
+            backgroundColor: "rgba(0,0,0,0.7)",
+            color: "white",
             padding: 5,
             borderRadius: 5,
             fontSize: 12,
-            zIndex: 1000
+            zIndex: 1000,
           }}
         >
           <div>追跡モード: {trackingMode}</div>
-          <div>有効状態: {isEnabled ? '有効' : '無効'}</div>
-          <div>ローカル追跡: {isTracking ? '動作中' : '停止'}</div>
-          <div>サーバー追跡: {isServerTracking ? '動作中' : '停止'}</div>
+          <div>有効状態: {isEnabled ? "有効" : "無効"}</div>
+          <div>ローカル追跡: {isTracking ? "動作中" : "停止"}</div>
+          <div>サーバー追跡: {isServerTracking ? "動作中" : "停止"}</div>
           <div>
             最終位置:
             {lastPosition
               ? `(${lastPosition.x.toFixed(2)}, ${lastPosition.y.toFixed(2)}, ${lastPosition.width.toFixed(2)}, ${lastPosition.height.toFixed(2)})`
-              : 'なし'}
+              : "なし"}
           </div>
         </div>
       )}
