@@ -15,23 +15,50 @@ export interface AnimalData {
   [key: string]: AnimalInfo;
 }
 
-// WebSocketメッセージの型
-export type WebSocketMessageType = 'text' | 'audio' | 'set_animal' | 'message';
+// WebSocketのメッセージタイプを拡張
+export type WebSocketMessageType = 
+  'text' | 'audio' | 'set_animal' | 'message' | 
+  'image' | 'tracking_result' | 'tracking_status' |
+  'start_tracking' | 'stop_tracking';
 
 // WebSocketから送信するメッセージの型
+// WebSocketから送信するメッセージの型を拡張
 export interface WebSocketOutgoingMessage {
   type: WebSocketMessageType;
   content?: string;
   animal_type?: string;
-  id?: string; // メッセージの一意識別子を追加
+  id?: string;
+  
+  // 追跡関連の新しいフィールド
+  data?: string;        // Base64エンコードされた画像データ
+  settings?: {
+    fps?: number;
+    quality?: number;
+    resolution?: {
+      width: number;
+      height: number;
+    }
+  }
 }
 
 // WebSocketから受信するメッセージの型
 export interface WebSocketIncomingMessage {
   type: WebSocketMessageType;
   data?: string;
-  id?: string; // メッセージの一意識別子を追加
+  id?: string;
   error?: string;
+  
+  // 追跡関連の新しいフィールド
+  object_name?: string;
+  confidence?: number;
+  boundingBox?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  status?: 'starting' | 'active' | 'stopped' | 'error';
+  message?: string;
 }
 
 // 会話メッセージの型
@@ -64,3 +91,12 @@ export interface IdentifyAnimalResponse {
     height: number;
   }
 }
+
+export interface BoundingBox {
+  x: number;      // 正規化された x 座標 (0-1)
+  y: number;      // 正規化された y 座標 (0-1)
+  width: number;  // 正規化された幅 (0-1)
+  height: number; // 正規化された高さ (0-1)
+}
+
+export type TrackingMode = 'local' | 'server';

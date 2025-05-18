@@ -30,7 +30,7 @@ class AudioProcessor:
     def __init__(self, target: str = "犬"):
         self.friend = target
         # 使用モデル名（必要に応じて変更）
-        self.model_name = "gpt-3.5-turbo"
+        self.model_name = "gpt-4.1-nano"
         # prompts.json からプロンプトを取得、見つからなければデフォルトを使用
         model_prompts = PROMPTS.get(self.model_name, {})
         prompt_text = model_prompts.get(self.friend, model_prompts.get("default", DEFAULT_PROMPT))

@@ -1,4 +1,5 @@
-// src/contexts/ConversationContext.tsx
+// ConversationContext.tsx の完全版
+// 追跡機能に対応するよう拡張したバージョン
 
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
@@ -8,10 +9,12 @@ import {
   type ConversationMessage,
   type WebSocketIncomingMessage,
   type WebSocketOutgoingMessage,
+  type BoundingBox
 } from '../types';
 
-// コンテキストの型定義
+// 拡張されたコンテキストの型定義
 interface ConversationContextType {
+  // 既存のプロパティとメソッド
   messages: ConversationMessage[];
   isListening: boolean;
   isSpeaking: boolean;
@@ -21,10 +24,21 @@ interface ConversationContextType {
   stopListening: () => void;
   toggleListening: () => void;
   sendMessage: (text: string) => void;
-  // 追加するメソッドと状態
   animalType: string | null;
   animalName: string | null;
   setAnimalInfo: (animalType: string, animalName: string) => void;
+  
+  // 追加する追跡関連のプロパティとメソッド
+  sendImageFrame: (imageData: string, animalType?: string) => void;
+  startTracking: (animalType: string) => void;
+  stopTracking: () => void;
+  lastTrackingResult: {
+    objectName: string;
+    boundingBox: BoundingBox;
+    confidence: number;
+    timestamp: number;
+  } | null;
+  trackingStatus: 'inactive' | 'starting' | 'active' | 'stopped' | 'error';
 }
 
 // デフォルト値を持つコンテキストを作成
@@ -41,6 +55,13 @@ const ConversationContext = createContext<ConversationContextType>({
   toggleListening: () => {},
   sendMessage: () => {},
   setAnimalInfo: () => {},
+  
+  // 追加する追跡関連のデフォルト値
+  sendImageFrame: () => {},
+  startTracking: () => {},
+  stopTracking: () => {},
+  lastTrackingResult: null,
+  trackingStatus: 'inactive'
 });
 
 // プロバイダーのプロップス型
@@ -57,14 +78,23 @@ export const ConversationProvider: React.FC<ConversationProviderProps> = ({
   clientId,
   initialAnimalType = null,
   initialAnimalName = null,
-
 }) => {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [isListening, setIsListening] = useState<boolean>(false);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
-  const [animalType, setAnimalType] = useState<string>(initialAnimalType || '');
-  const [animalName, setAnimalName] = useState<string>(initialAnimalName || '');
+  const [animalType, setAnimalType] = useState<string | null>(initialAnimalType);
+  const [animalName, setAnimalName] = useState<string | null>(initialAnimalName);
   const processedMessageIds = React.useRef<Set<string>>(new Set());
+  
+  // 追加: 追跡関連の状態
+  const [lastTrackingResult, setLastTrackingResult] = useState<{
+    objectName: string;
+    boundingBox: BoundingBox;
+    confidence: number;
+    timestamp: number;
+  } | null>(null);
+  
+  const [trackingStatus, setTrackingStatus] = useState<'inactive' | 'starting' | 'active' | 'stopped' | 'error'>('inactive');
 
   // クライアントIDを含めたWebSocketのURL
   const socketUrl = `${config.websocketEndpoint}?client_id=${encodeURIComponent(clientId)}`;
@@ -136,13 +166,14 @@ export const ConversationProvider: React.FC<ConversationProviderProps> = ({
         // 処理済みとしてマーク
         processedMessageIds.current.add(messageId);
 
+        // 既存のメッセージタイプ処理
         if (data.type === "audio") {
           // 音声データの処理
           if (data.data) {
             speechService.playAudio(data.data);
             setIsSpeaking(true);
 
-            // 音声の再生が終わったことを示すタイマー（実際には音声長に合わせるべき）
+            // 音声の再生が終わったことを示すタイマー
             setTimeout(() => {
               setIsSpeaking(false);
             }, 5000); // 仮に5秒後
@@ -160,6 +191,32 @@ export const ConversationProvider: React.FC<ConversationProviderProps> = ({
             ]);
           }
         }
+        
+        // 追加: 追跡結果メッセージの処理
+        else if (data.type === "tracking_result") {
+          // バウンディングボックス情報がある場合のみ処理
+          if (data.boundingBox && data.object_name) {
+            setLastTrackingResult({
+              objectName: data.object_name,
+              boundingBox: data.boundingBox,
+              confidence: data.confidence || 0,
+              timestamp: Date.now()
+            });
+          }
+        }
+        
+        // 追加: 追跡状態メッセージの処理
+        else if (data.type === "tracking_status") {
+          if (data.status) {
+            setTrackingStatus(data.status as any);
+            
+            // エラーの場合はコンソールに出力
+            if (data.status === "error" && data.message) {
+              console.error("追跡エラー:", data.message);
+            }
+          }
+        }
+        
       } catch (error) {
         console.error("メッセージの解析エラー:", error);
         // JSONでない場合はテキストメッセージとして処理
@@ -287,6 +344,56 @@ export const ConversationProvider: React.FC<ConversationProviderProps> = ({
     };
     sendJsonMessage(outgoingMessage);
   };
+  
+  // 追加: 画像フレームを送信する関数
+  const sendImageFrame = (imageData: string, targetAnimal?: string): void => {
+    // WebSocketが接続されていない場合は処理しない
+    if (readyState !== ReadyState.OPEN) return;
+    
+    // フレームデータをWebSocketで送信
+    const outgoingMessage: WebSocketOutgoingMessage = {
+      type: "image",
+      data: imageData,
+      animal_type: targetAnimal || animalType || undefined,
+      id: `img-${Date.now()}`
+    };
+    
+    sendJsonMessage(outgoingMessage);
+  };
+
+  // 追加: 追跡開始リクエストを送信する関数
+  const startTracking = (targetAnimal: string): void => {
+    // WebSocketが接続されていない場合は処理しない
+    if (readyState !== ReadyState.OPEN) {
+      setTrackingStatus('error');
+      return;
+    }
+    
+    // 追跡開始リクエストを送信
+    const outgoingMessage: WebSocketOutgoingMessage = {
+      type: "start_tracking",
+      animal_type: targetAnimal,
+      id: `track-start-${Date.now()}`
+    };
+    
+    sendJsonMessage(outgoingMessage);
+    setTrackingStatus('starting');
+  };
+
+  // 追加: 追跡停止リクエストを送信する関数
+  const stopTracking = (): void => {
+    // WebSocketが接続されていない場合は処理しない
+    if (readyState !== ReadyState.OPEN) return;
+    
+    // 追跡停止リクエストを送信
+    const outgoingMessage: WebSocketOutgoingMessage = {
+      type: "stop_tracking",
+      id: `track-stop-${Date.now()}`
+    };
+    
+    sendJsonMessage(outgoingMessage);
+    setTrackingStatus('stopped');
+  };
 
   // コンテキスト値を構築
   const contextValue: ConversationContextType = {
@@ -299,10 +406,16 @@ export const ConversationProvider: React.FC<ConversationProviderProps> = ({
     stopListening,
     toggleListening,
     sendMessage,
-    // 追加するプロパティとメソッド
     animalType,
     animalName,
     setAnimalInfo,
+    
+    // 追加する追跡関連のプロパティとメソッド
+    sendImageFrame,
+    startTracking,
+    stopTracking,
+    lastTrackingResult,
+    trackingStatus
   };
 
   // コンテキストプロバイダーでラップ
