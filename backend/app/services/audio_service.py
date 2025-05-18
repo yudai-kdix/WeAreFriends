@@ -1,12 +1,22 @@
 import os
 import io
 import base64
+import json
 from app.services.tts_service import synthesize_audio
 from openai import OpenAI
 from dotenv import load_dotenv
 from gtts import gTTS
 from app.core.logger import logger
-from app.core.prompts import get_prompt, DEFAULT_PROMPT
+from app.core.prompts import DEFAULT_PROMPT
+
+# プロンプトJSONのロード
+PROMPTS_JSON_PATH = "app/core/prompts.json"
+
+def load_prompts():
+    with open(PROMPTS_JSON_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+PROMPTS = load_prompts()
 
 # 環境変数読み込みと GPT クライアント初期化
 load_dotenv()
@@ -20,9 +30,10 @@ class AudioProcessor:
     def __init__(self, target: str = "犬"):
         self.friend = target
         # 使用モデル名（必要に応じて変更）
-        self.model_name = "gpt-3.5-turbo"
+        self.model_name = "gpt-4.1-nano"
         # prompts.json からプロンプトを取得、見つからなければデフォルトを使用
-        prompt_text = get_prompt(self.model_name, self.friend)
+        model_prompts = PROMPTS.get(self.model_name, {})
+        prompt_text = model_prompts.get(self.friend, model_prompts.get("default", DEFAULT_PROMPT))
         self.messages = [
             {"role": "system", "content": prompt_text}
         ]

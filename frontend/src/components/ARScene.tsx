@@ -1,9 +1,8 @@
 // ARScene.tsx
 
-import React, { useEffect, useRef, useState, type FC } from "react";
+import React, { useCallback, useEffect, useRef, useState, type FC } from "react";
 import config from '../config';
 import { type IdentifyAnimalResponse } from "../types/index";
-import ObjectTracking from "./ObjectTracking";
 import AnimatedSpeechBubble from "./AnimatedSpeechBubble";
 import ModelLoader from "./ModelLoader";
 import { useModel } from "../contexts/ModelContext";
@@ -11,6 +10,8 @@ import { useConversation } from '../contexts/ConversationContext';
 import { getObjectInfo } from '../utils/objectInfoUtils';
 import IdentifyButton from "./IdentifyButton";
 import MicButton from "./MicButton";
+import TrackingController, { type TrackingMode } from './TrackingController';
+import TrackingModeSelector from './TrackingModeSelector';
 
 // ARSceneコンポーネントの引数にclientIdを追加
 interface ARSceneProps {
@@ -43,13 +44,18 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
   // ModelContextからモデル状態を取得
   const { model, isLoading: isModelLoading, error: modelContextError,  loadModel } = useModel();
   // ConversationContextから動物情報更新メソッドを取得
-  const { setAnimalInfo } = useConversation();
+  const { setAnimalInfo, connectionStatus } = useConversation();
   
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [objectPosition, setObjectPosition] = useState<BoundingBox | null>(null);
   const [initialPosition, setInitialPosition] = useState<BoundingBox | null>(null);
   const [showSpeechBubble, setShowSpeechBubble] = useState<boolean>(false);
   const [showDebugInfo, setShowDebugInfo] = useState<boolean>(false);
+
+  const [trackingMode, setTrackingMode] = useState<TrackingMode>('local');
+  const [isTrackingEnabled, setTrackingEnabled] = useState<boolean>(false);
+  const [showTrackingDebug, setShowTrackingDebug] = useState<boolean>(false);
+
 
   // WebXRサポートのチェック
   useEffect(() => {
@@ -76,6 +82,7 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
       setIsModelLoaded(true);
       setIdentifyButtonVisible(true);
       setShowDebugInfo(false);
+      setShowTrackingDebug(false);
     } else {
       setIsModelLoaded(false);
     }
@@ -216,6 +223,9 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
           setObjectPosition({ x, y, width, height });
           setInitialPosition({ x, y, width, height });
 
+          // 追跡を自動的に有効化
+          setTrackingEnabled(true);
+
           // マイクボタンを表示（識別ボタンは非表示にしない）
           setShowMicButton(true);
           
@@ -226,6 +236,9 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
           const defaultPosition = { x: 0.4, y: 0.4, width: 0.2, height: 0.2 };
           setObjectPosition(defaultPosition);
           setInitialPosition(defaultPosition);
+
+          // 追跡を自動的に有効化
+          setTrackingEnabled(true);
 
           // マイクボタンを表示（識別ボタンは非表示にしない）
           setShowMicButton(true);
@@ -243,6 +256,7 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
         setDetectedObject(null);
         setShowSpeechBubble(false);
         setObjectPosition(null);
+        setTrackingEnabled(false); // 追跡を無効化
       }
     } catch (error) {
       console.error('オブジェクト識別中にエラーが発生しました:', error);
@@ -253,7 +267,7 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
   };
 
   // 追跡による位置情報の更新
-  const handlePositionUpdate = (newPosition: BoundingBox | null) => {
+  const handlePositionUpdate = useCallback((newPosition: BoundingBox | null) => {
     if (newPosition) {
       // デバッグ表示がオンの場合のみログを出力
       if (showDebugInfo) {
@@ -268,7 +282,7 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
       // オプション：完全に追跡が失敗した場合は初期位置に戻す
       // setObjectPosition(initialPosition);
     }
-  };
+  }, [initialPosition, showDebugInfo]);
 
   // ARボタンが利用可能かどうか
   const renderARButton = (): React.ReactNode => {
@@ -336,13 +350,15 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
         </div>
       )}
 
-      {/* オブジェクト追跡コンポーネント - モデルがロードされ、物体が検出された場合に表示 */}
       {detectedObject && !showConversation && isModelLoaded && (
-        <ObjectTracking
+        <TrackingController
           videoRef={videoRef}
           detectedAnimal={detectedObject}
           onPositionUpdate={handlePositionUpdate}
-          showDebugInfo={showDebugInfo}
+          clientId={clientId}
+          trackingMode={trackingMode}
+          isEnabled={isTrackingEnabled}
+          showDebugInfo={showTrackingDebug}
         />
       )}
 
@@ -388,6 +404,18 @@ const ARScene: FC<ARSceneProps> = ({ clientId }) => {
       )}
 
       {renderARButton()}
+
+      {detectedObject && !showConversation && !isUsingAR && (
+        <div className="tracking-controls">
+          <TrackingModeSelector
+            mode={trackingMode}
+            onChange={setTrackingMode}
+            isConnected={connectionStatus === "open"}
+            disabled={!detectedObject || isLoading}
+            compact={false}
+          />
+        </div>
+      )}
 
       {/* ローディングインジケーター */}
       {isLoading && (
