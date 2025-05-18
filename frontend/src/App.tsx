@@ -47,7 +47,7 @@ const CameraPage: FC<{ clientId: string; websocketStatus: string }> = ({
             component="h1"
             sx={{ fontWeight: "bold", color: "white" }}
           >
-            動物園AR体験
+            We Are Friends
           </Typography>
 
           <Box sx={{ display: "flex", gap: 1 }}>
@@ -248,7 +248,7 @@ const App: FC = () => {
     [ReadyState.UNINSTANTIATED]: "uninstantiated",
   }[readyState];
 
-  // カメラとAPIの可用性をチェック
+  // APIの可用性をチェック
   useEffect(() => {
     async function checkRequirements() {
       try {

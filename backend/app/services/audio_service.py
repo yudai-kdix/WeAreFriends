@@ -20,7 +20,7 @@ class AudioProcessor:
     def __init__(self, target: str = "犬"):
         self.friend = target
         # 使用モデル名（必要に応じて変更）
-        self.model_name = "gpt-3.5-turbo"
+        self.model_name = "gpt-4.1-nano"
         # prompts.json からプロンプトを取得、見つからなければデフォルトを使用
         prompt_text = get_prompt(self.model_name, self.friend)
         self.messages = [
