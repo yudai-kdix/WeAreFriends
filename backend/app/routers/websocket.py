@@ -6,6 +6,8 @@ from app.managers.connection_manager import manager
 from app.models.websocket import WSRequest, WebSocketMessage
 from app.services.audio_service import chat as audio_chat, process_audio as audio_process
 from app.core.logger import logger
+from app.services.image_service import save_ws_image, ImageProcessor
+
 
 router = APIRouter()
 
@@ -37,25 +39,38 @@ async def websocket_endpoint(websocket: WebSocket):
                         data=f"{friend}の設定が完了しました。会話を始めましょう！"
                     ).dict()
                 )
+            # websocket.py 内
+            elif msg_type == "image":
+                logger.info(f"画像受信: ")
+                # 1. 画像保存
+                filename = f"image_{datetime.now().timestamp()}.jpg"
+                image_path = save_ws_image(data.get("data"), filename)
+                # 2. BBox検出
+                box = ImageProcessor().detect_top_box(image_path, conf_threshold=0.3)
+                # 3. WebSocket返信
+                await manager.send_message(
+                    client_id,
+                    WebSocketMessage(type="bbox", data=box).dict()
+                )
 
             elif msg_type == "message":
                 content = data.get("content", "")
                 # 現在の会話相手を取得
                 friend = manager.get_friend(client_id)
                 logger.info(f"メッセージ受信: {content} (相手: {friend})")
-                
+
                 # 会話相手が設定されていない場合はデフォルト値を使用
                 if not friend or friend == "default":
                     logger.warning(f"クライアント {client_id} の会話相手が設定されていません。デフォルト値を使用します。")
                     await manager.send_message(
-                        client_id, 
+                        client_id,
                         WebSocketMessage(
-                            type="text", 
+                            type="text",
                             data="会話相手が設定されていません。まずは動物を識別してください。"
                         ).dict()
                     )
                     continue
-                
+
                 # chat を呼ぶ際に session_id と friend を渡す
                 text, audio_b64 = audio_chat(
                     content,
@@ -79,19 +94,19 @@ async def websocket_endpoint(websocket: WebSocket):
                 filename = f"audio_{datetime.now().timestamp()}.mp3"
                 # 現在の会話相手を取得
                 friend = manager.get_friend(client_id)
-                
+
                 # 会話相手が設定されていない場合はデフォルト値を使用
                 if not friend or friend == "default":
                     logger.warning(f"クライアント {client_id} の会話相手が設定されていません。デフォルト値を使用します。")
                     await manager.send_message(
-                        client_id, 
+                        client_id,
                         WebSocketMessage(
-                            type="text", 
+                            type="text",
                             data="会話相手が設定されていません。まずは動物を識別してください。"
                         ).dict()
                     )
                     continue
-                    
+
                 # process_audio を呼ぶ際にも session_id と friend を渡す
                 text = audio_process(
                     audio_b64,

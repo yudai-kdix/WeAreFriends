@@ -24,7 +24,8 @@ dependencies = [
     "asyncpg (>=0.30.0,<0.31.0)",
     "alembic (>=1.15.2,<2.0.0)",
     "psycopg2-binary (>=2.9.10,<3.0.0)",
-    "python-multipart (>=0.0.20,<0.0.21)"
+    "python-multipart (>=0.0.20,<0.0.21)",
+    "aiosqlite (>=0.21.0,<0.22.0)"
 ]
 
 [tool.poetry.dependencies]
